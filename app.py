@@ -147,8 +147,14 @@ def process_compressed_file(task_id, file_path, output_dir):
         task.update_status(f"处理失败: {str(e)}", 100, "错误")
         task.error = str(e)
     finally:
-        # 清理临时文件（在实际应用中可能需要延迟清理）
-        pass
+        # 清理临时文件（保留输出文件供下载）
+        try:
+            # 清理上传文件和临时解压目录
+            FileUtils.safe_remove(file_path)  # 删除上传的原始文件
+            if 'temp_dir' in locals():
+                FileUtils.safe_remove(temp_dir)  # 删除临时解压目录
+        except Exception as cleanup_error:
+            print(f"清理临时文件失败: {cleanup_error}")
 
 @app.route('/')
 def index():
@@ -288,6 +294,20 @@ def cleanup_files():
         FileUtils.cleanup_old_files(app.config['OUTPUT_FOLDER'], hours_old=48)
         
         return jsonify({'message': '清理完成'})
+    except Exception as e:
+        return jsonify({'error': f'清理失败: {str(e)}'}), 500
+
+@app.route('/cleanup/task/<task_id>', methods=['POST'])
+def cleanup_task_files(task_id):
+    """清理指定任务的所有文件"""
+    try:
+        FileUtils.cleanup_task_files(
+            task_id,
+            app.config['UPLOAD_FOLDER'],
+            app.config['TEMP_FOLDER'],
+            app.config['OUTPUT_FOLDER']
+        )
+        return jsonify({'message': f'任务 {task_id} 文件清理完成'})
     except Exception as e:
         return jsonify({'error': f'清理失败: {str(e)}'}), 500
 

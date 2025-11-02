@@ -100,7 +100,56 @@ class FileUtils:
         try:
             if os.path.isfile(path):
                 os.remove(path)
+                print(f"已删除文件: {path}")
             elif os.path.isdir(path):
                 shutil.rmtree(path)
+                print(f"已删除目录: {path}")
         except Exception as e:
             print(f"删除失败 {path}: {e}")
+
+    @staticmethod
+    def cleanup_task_files(task_id, upload_folder, temp_folder, output_folder):
+        """清理指定任务的所有相关文件"""
+        print(f"开始清理任务 {task_id} 的文件...")
+        
+        # 清理上传文件
+        for filename in os.listdir(upload_folder):
+            if filename.startswith(task_id):
+                file_path = os.path.join(upload_folder, filename)
+                FileUtils.safe_remove(file_path)
+        
+        # 清理临时目录
+        temp_dir = os.path.join(temp_folder, f"temp_{task_id}")
+        if os.path.exists(temp_dir):
+            FileUtils.safe_remove(temp_dir)
+        
+        # 清理PDF输出目录
+        pdf_dir = os.path.join(output_folder, f"pdfs_{task_id}")
+        if os.path.exists(pdf_dir):
+            FileUtils.safe_remove(pdf_dir)
+        
+        # 清理ZIP输出文件
+        zip_file = os.path.join(output_folder, f"result_{task_id}.zip")
+        if os.path.exists(zip_file):
+            FileUtils.safe_remove(zip_file)
+        
+        print(f"任务 {task_id} 文件清理完成")
+
+    @staticmethod
+    def cleanup_all_temp_files():
+        """清理所有临时文件"""
+        print("开始清理所有临时文件...")
+        
+        config_obj = config['default']
+        
+        # 清理上传文件夹
+        for filename in os.listdir(config_obj.UPLOAD_FOLDER):
+            file_path = os.path.join(config_obj.UPLOAD_FOLDER, filename)
+            FileUtils.safe_remove(file_path)
+        
+        # 清理临时文件夹
+        for item in os.listdir(config_obj.TEMP_FOLDER):
+            item_path = os.path.join(config_obj.TEMP_FOLDER, item)
+            FileUtils.safe_remove(item_path)
+        
+        print("所有临时文件清理完成")
