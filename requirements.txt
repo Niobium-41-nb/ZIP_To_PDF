@@ -1,0 +1,6 @@
+Flask==2.3.3
+Pillow==10.0.0
+img2pdf==0.4.4
+rarfile==4.0
+py7zr==0.20.4
+Werkzeug==2.3.7
