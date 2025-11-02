@@ -169,6 +169,68 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
         }
+
+        .pdf-list-container {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .pdf-list {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .pdf-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .pdf-item:hover {
+            border-color: #4facfe;
+            box-shadow: 0 2px 8px rgba(79, 172, 254, 0.1);
+        }
+
+        .pdf-info {
+            flex: 1;
+        }
+
+        .pdf-name {
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+
+        .pdf-size {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .pdf-download-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .pdf-download-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.3);
+        }
         
         .error-message {
             background: #f8d7da;
@@ -239,6 +301,16 @@
             .header h1 {
                 font-size: 2em;
             }
+
+            .pdf-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .pdf-download-btn {
+                align-self: flex-end;
+            }
         }
     </style>
 </head>
@@ -275,6 +347,11 @@
                 <div style="text-align: center;">
                     <h3 style="color: #28a745; margin-bottom: 20px;">处理完成！</h3>
                     <a href="#" class="download-btn" id="downloadBtn">下载PDF文件包</a>
+                </div>
+                
+                <div class="pdf-list-container" id="pdfListContainer" style="margin-top: 30px; display: none;">
+                    <h4 style="color: #495057; margin-bottom: 15px;">生成的PDF文件：</h4>
+                    <div class="pdf-list" id="pdfList"></div>
                 </div>
             </div>
             
@@ -317,6 +394,8 @@
         const errorMessage = document.getElementById('errorMessage');
         const resultContainer = document.getElementById('resultContainer');
         const downloadBtn = document.getElementById('downloadBtn');
+        const pdfListContainer = document.getElementById('pdfListContainer');
+        const pdfList = document.getElementById('pdfList');
         
         // 拖拽事件处理
         uploadArea.addEventListener('dragover', (e) => {
@@ -416,7 +495,7 @@
                         statusMessage.textContent = data.status;
                         
                         // 检查是否完成
-                        if (data.status === '完成') {
+                        if (data.status === '处理完成') {
                             clearInterval(statusCheckInterval);
                             showResult(data);
                         } else if (data.error) {
@@ -438,6 +517,76 @@
             if (data.download_url) {
                 downloadBtn.href = data.download_url;
             }
+
+            // 如果有PDF列表URL，加载PDF文件列表
+            if (data.pdf_list_url) {
+                loadPdfList(data.pdf_list_url);
+            }
+        }
+
+        // 加载PDF文件列表
+        function loadPdfList(pdfListUrl) {
+            fetch(pdfListUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('加载PDF列表失败:', data.error);
+                        return;
+                    }
+
+                    if (data.pdf_files && data.pdf_files.length > 0) {
+                        displayPdfList(data.pdf_files);
+                    }
+                })
+                .catch(error => {
+                    console.error('加载PDF列表失败:', error);
+                });
+        }
+
+        // 显示PDF文件列表
+        function displayPdfList(pdfFiles) {
+            pdfList.innerHTML = '';
+            
+            pdfFiles.forEach(pdfFile => {
+                const pdfItem = document.createElement('div');
+                pdfItem.className = 'pdf-item';
+                
+                const pdfInfo = document.createElement('div');
+                pdfInfo.className = 'pdf-info';
+                
+                const pdfName = document.createElement('div');
+                pdfName.className = 'pdf-name';
+                pdfName.textContent = pdfFile.filename;
+                
+                const pdfSize = document.createElement('div');
+                pdfSize.className = 'pdf-size';
+                pdfSize.textContent = formatFileSize(pdfFile.size);
+                
+                pdfInfo.appendChild(pdfName);
+                pdfInfo.appendChild(pdfSize);
+                
+                const downloadBtn = document.createElement('a');
+                downloadBtn.className = 'pdf-download-btn';
+                downloadBtn.href = pdfFile.download_url;
+                downloadBtn.textContent = '下载';
+                downloadBtn.target = '_blank';
+                
+                pdfItem.appendChild(pdfInfo);
+                pdfItem.appendChild(downloadBtn);
+                
+                pdfList.appendChild(pdfItem);
+            });
+            
+            pdfListContainer.style.display = 'block';
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
         
         // 显示错误信息
@@ -452,6 +601,7 @@
             progressContainer.style.display = 'none';
             errorMessage.style.display = 'none';
             resultContainer.style.display = 'none';
+            pdfListContainer.style.display = 'none';
             progressFill.style.width = '0%';
             progressText.textContent = '0%';
             statusText.textContent = '等待开始';

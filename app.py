@@ -214,10 +214,11 @@ def get_status(task_id):
         status_info = processing_status[task_id]
         
         # 检查是否完成且有结果
-        if status_info['status'] == '完成' and task_id in processing_results:
+        if status_info['status'] == '处理完成' and task_id in processing_results:
             result = processing_results[task_id]
             status_info['download_url'] = f'/download/{task_id}'
             status_info['pdf_count'] = len(result.get('pdf_files', []))
+            status_info['pdf_list_url'] = f'/download/list/{task_id}'
         
         return jsonify(status_info)
     else:
@@ -225,7 +226,7 @@ def get_status(task_id):
 
 @app.route('/download/<task_id>')
 def download_result(task_id):
-    """下载处理结果"""
+    """下载处理结果（ZIP包）"""
     if task_id in processing_results:
         result = processing_results[task_id]
         zip_file = result.get('zip_file')
@@ -235,6 +236,43 @@ def download_result(task_id):
             return send_file(zip_file, as_attachment=True, download_name=filename)
     
     return jsonify({'error': '文件不存在或尚未完成'}), 404
+
+@app.route('/download/pdf/<task_id>/<int:pdf_index>')
+def download_single_pdf(task_id, pdf_index):
+    """下载单个PDF文件"""
+    if task_id in processing_results:
+        result = processing_results[task_id]
+        pdf_files = result.get('pdf_files', [])
+        
+        if 0 <= pdf_index < len(pdf_files):
+            pdf_file = pdf_files[pdf_index]
+            if os.path.exists(pdf_file):
+                filename = os.path.basename(pdf_file)
+                return send_file(pdf_file, as_attachment=True, download_name=filename)
+    
+    return jsonify({'error': 'PDF文件不存在'}), 404
+
+@app.route('/download/list/<task_id>')
+def list_pdf_files(task_id):
+    """获取PDF文件列表"""
+    if task_id in processing_results:
+        result = processing_results[task_id]
+        pdf_files = result.get('pdf_files', [])
+        
+        file_list = []
+        for i, pdf_file in enumerate(pdf_files):
+            if os.path.exists(pdf_file):
+                file_info = {
+                    'index': i,
+                    'filename': os.path.basename(pdf_file),
+                    'size': os.path.getsize(pdf_file),
+                    'download_url': f'/download/pdf/{task_id}/{i}'
+                }
+                file_list.append(file_info)
+        
+        return jsonify({'pdf_files': file_list})
+    
+    return jsonify({'error': '任务不存在'}), 404
 
 @app.route('/cleanup', methods=['POST'])
 def cleanup_files():
