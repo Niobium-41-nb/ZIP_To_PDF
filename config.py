@@ -3,6 +3,7 @@ import os
 class Config:
     # 基础配置
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key'
+    DOWNLOAD_FOLDER = 'download'
     
     # 文件上传配置
     MAX_CONTENT_LENGTH = 1024 * 1024 * 1024  # 1GB
