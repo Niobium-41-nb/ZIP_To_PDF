@@ -323,6 +323,10 @@ def cleanup_all_downloads():
         print(f"清理下载文件失败: {e}")
         return False
 
+def is_github_actions():
+    """检查是否在 GitHub Actions 环境中运行"""
+    return os.getenv('GITHUB_ACTIONS') == 'true'
+
 def main():
     """主函数"""
     print("=" * 50)
@@ -351,7 +355,13 @@ def main():
     print("创建项目目录...")
     FileUtils.create_directories()
     
-    if args.cleanup:
+    if is_github_actions():
+        # 在 GitHub Actions 中使用简化模式
+        if args.jm_id:
+            from github_action import main as github_main
+            github_main(args.jm_id)
+        return
+    elif args.cleanup:
         # 清理下载文件
         cleanup_all_downloads()
         return
