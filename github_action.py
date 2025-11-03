@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 GitHub Action 专用脚本 - JM漫画下载和PDF转换
+兼容最新版 JMComic
 """
 import os
 import sys
@@ -32,7 +33,7 @@ def safe_remove(path):
 
 def download_jm_comic(jm_id, download_dir):
     """
-    使用JMComic下载漫画
+    使用JMComic下载漫画 - 兼容最新版本
     """
     try:
         print(f"📥 开始下载JM漫画 {jm_id}...")
@@ -46,13 +47,33 @@ def download_jm_comic(jm_id, download_dir):
         
         print(f"📁 下载目录: {comic_dir}")
         
-        # 配置下载选项
-        option = JmOption.default()
-        option.dir_rule.base_dir = comic_dir
-        option.download.image.suffix = '.jpg'
-        option.download.threading.image = 3
+        # 新版 JMComic 配置方式
+        try:
+            # 方式1: 使用字典配置
+            option_dict = {
+                'dir_rule': {'base_dir': comic_dir},
+                'download': {
+                    'image': {'suffix': '.jpg'},
+                    'threading': {'image': 3}
+                },
+                'client': {
+                    'retry_times': 3,
+                    'cache': True
+                }
+            }
+            option = JmOption.construct(option_dict)
+            
+        except Exception as e:
+            print(f"配置方式1失败: {e}")
+            # 方式2: 使用默认配置并修改
+            option = JmOption.default()
+            option.dir_rule.base_dir = comic_dir
+            option.download.image.suffix = '.jpg'
+            option.download.threading.image = 3
         
-        # 下载漫画
+        print(f"🎯 使用 JMComic 版本: {jmcomic.__version__}")
+        
+        # 创建下载器并下载
         downloader = JmDownloader(option)
         downloader.download_album(jm_id)
         
@@ -67,14 +88,20 @@ def download_jm_comic(jm_id, download_dir):
             print("❌ 未找到下载的图片文件")
             # 显示目录内容帮助调试
             print("📂 目录内容:")
-            for item in os.listdir(comic_dir):
-                item_path = os.path.join(comic_dir, item)
-                if os.path.isdir(item_path):
-                    print(f"   📁 {item}/")
-                    for sub_item in os.listdir(item_path)[:10]:  # 只显示前10个文件
-                        print(f"     📄 {sub_item}")
-                else:
-                    print(f"   📄 {item}")
+            try:
+                for item in os.listdir(comic_dir):
+                    item_path = os.path.join(comic_dir, item)
+                    if os.path.isdir(item_path):
+                        print(f"   📁 {item}/")
+                        try:
+                            for sub_item in os.listdir(item_path)[:5]:  # 只显示前5个文件
+                                print(f"     📄 {sub_item}")
+                        except:
+                            print(f"     (无法读取子目录)")
+                    else:
+                        print(f"   📄 {item}")
+            except Exception as e:
+                print(f"   无法读取目录: {e}")
             return None
         
         print(f"✅ 找到 {len(image_files)} 张图片")
@@ -226,8 +253,11 @@ def check_download_results():
     
     for file in files:
         file_path = os.path.join(download_dir, file)
-        file_size = os.path.getsize(file_path) / (1024 * 1024)
-        print(f"   📄 {file} ({file_size:.1f} MB)")
+        if os.path.exists(file_path):
+            file_size = os.path.getsize(file_path) / (1024 * 1024)
+            print(f"   📄 {file} ({file_size:.1f} MB)")
+        else:
+            print(f"   📄 {file} (文件不存在)")
     
     return len(pdf_files) > 0 or len(zip_files) > 0
 

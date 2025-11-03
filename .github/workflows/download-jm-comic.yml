@@ -35,7 +35,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install jmcomic
 
     - name: Create necessary directories
       run: |
@@ -44,7 +43,6 @@ jobs:
     - name: Download JM comic and convert to PDF
       env:
         JM_ID: ${{ inputs.jm_id }}
-        CLEANUP_TEMP: ${{ inputs.cleanup_temp }}
       run: |
         python github_action.py $JM_ID
 
@@ -66,6 +64,6 @@ jobs:
         [ -d "download" ] && find download/ -name "*.zip" -delete || true
         echo "🧹 清理完成"
 
-    - name: Test environment
+    - name: Check JMComic version
       run: |
-        python test_github_action.py
+        python check_jmcomic_version.py
