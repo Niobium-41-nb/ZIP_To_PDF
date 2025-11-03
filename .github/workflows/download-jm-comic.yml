@@ -52,7 +52,7 @@ jobs:
         name: jm-${{ inputs.jm_id }}-pdf
         path: download/
         retention-days: 7
-        if-no-files-found: warn
+        if-no-files-found: error
 
     - name: Clean up workspace
       if: always() && inputs.cleanup_temp

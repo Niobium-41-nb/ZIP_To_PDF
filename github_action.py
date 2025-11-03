@@ -8,6 +8,7 @@ import sys
 import time
 import uuid
 import shutil
+import json
 from pathlib import Path
 
 def setup_environment():
@@ -133,77 +134,217 @@ def download_jm_comic(jm_id, download_dir):
         traceback.print_exc()
         return None
 
-def process_comic_to_pdf(jm_id, zip_path, download_dir):
+def process_images_to_pdf_directly(image_files, output_dir, base_name="comic"):
     """
-    处理漫画转换为PDF
+    直接处理图片文件为PDF，不依赖Flask的Web界面
     """
     try:
-        # 导入Flask应用组件
-        from app import process_compressed_file, processing_status, processing_results
+        print("🔄 直接转换图片为PDF...")
         
-        # 生成任务ID
-        task_id = str(uuid.uuid4())
+        from utils.image_processor import ImageProcessor
+        from utils.pdf_generator import PDFGenerator
         
-        print("🔄 开始处理漫画文件...")
+        # 处理图片
+        image_processor = ImageProcessor()
+        pdf_generator = PDFGenerator()
         
-        # 在后台处理
-        import threading
-        thread = threading.Thread(
-            target=process_compressed_file,
-            args=(task_id, zip_path, download_dir)
-        )
-        thread.daemon = True
-        thread.start()
+        # 设置状态回调
+        def status_callback(message, progress=None):
+            if progress:
+                print(f"📊 {message} - {progress}%")
+            else:
+                print(f"📊 {message}")
         
-        # 轮询处理状态
-        max_wait_time = 600  # 10分钟
-        start_time = time.time()
-        last_progress = 0
+        image_processor.set_status_callback(status_callback)
+        pdf_generator.set_status_callback(status_callback)
         
-        while time.time() - start_time < max_wait_time:
-            if task_id in processing_status:
-                status = processing_status[task_id]
-                
-                if status['status'] == '处理完成':
-                    print("✅ 处理完成!")
-                    
-                    if task_id in processing_results:
-                        result = processing_results[task_id]
-                        pdf_files = result.get('pdf_files', [])
-                        zip_file = result.get('zip_file')
-                        
-                        print(f"📄 生成 {len(pdf_files)} 个PDF文件:")
-                        for pdf in pdf_files:
-                            if os.path.exists(pdf):
-                                pdf_size = os.path.getsize(pdf) / (1024 * 1024)
-                                print(f"   - {Path(pdf).name} ({pdf_size:.1f} MB)")
-                            else:
-                                print(f"   - {Path(pdf).name} (文件不存在)")
-                        
-                        if zip_file and os.path.exists(zip_file):
-                            zip_size = os.path.getsize(zip_file) / (1024 * 1024)
-                            print(f"📦 完整包: {Path(zip_file).name} ({zip_size:.1f} MB)")
-                    
-                    return True
-                    
-                elif status['status'] == '错误':
-                    print(f"❌ 处理失败: {status.get('error', '未知错误')}")
-                    return False
-                
-                # 显示进度（只在进度更新时显示）
-                progress = status.get('progress', 0)
-                current_step = status.get('current_step', '')
-                if progress != last_progress:
-                    print(f"📊 进度: {progress}% - {current_step}")
-                    last_progress = progress
+        # 创建临时目录处理图片
+        temp_dir = os.path.join(output_dir, "temp_process")
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        # 处理图片
+        status_callback("开始处理图片")
+        processed_images = []
+        
+        for i, img_path in enumerate(image_files):
+            progress = (i + 1) / len(image_files) * 50  # 图片处理占50%进度
+            status_callback(f"处理图片 {i+1}/{len(image_files)}", progress)
             
-            time.sleep(2)
+            # 转换图片格式
+            converted_path = image_processor.convert_to_supported_format(img_path, temp_dir)
+            if converted_path:
+                # 优化图片尺寸
+                optimized_path = image_processor.optimize_image_for_pdf(converted_path)
+                processed_images.append(optimized_path)
+            else:
+                # 如果转换失败，使用原图
+                processed_images.append(img_path)
         
-        print("⏰ 处理超时")
-        return False
+        # 生成PDF
+        status_callback("开始生成PDF", 60)
+        pdf_filename = f"{base_name}.pdf"
+        pdf_path = os.path.join(output_dir, pdf_filename)
+        
+        # 使用img2pdf直接生成PDF
+        import img2pdf
+        
+        # 验证所有图片文件都存在
+        valid_images = [img for img in processed_images if os.path.exists(img)]
+        
+        if not valid_images:
+            status_callback("没有有效的图片文件", 100)
+            return None
+        
+        # 生成PDF
+        try:
+            with open(pdf_path, "wb") as pdf_file:
+                pdf_file.write(img2pdf.convert(valid_images))
+            
+            if os.path.exists(pdf_path) and os.path.getsize(pdf_path) > 0:
+                status_callback(f"PDF生成成功: {pdf_filename}", 100)
+                
+                # 清理临时文件
+                safe_remove(temp_dir)
+                
+                return pdf_path
+            else:
+                status_callback("PDF文件生成失败", 100)
+                return None
+                
+        except Exception as e:
+            status_callback(f"PDF生成失败: {e}", 100)
+            return None
+            
+    except Exception as e:
+        print(f"❌ 直接PDF转换失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+def extract_images_from_zip(zip_path, extract_dir):
+    """从ZIP文件中提取图片"""
+    try:
+        import zipfile
+        
+        print(f"📂 从ZIP文件提取图片: {Path(zip_path).name}")
+        
+        image_files = []
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            # 获取所有文件列表
+            file_list = zip_ref.namelist()
+            
+            # 过滤图片文件
+            image_files_in_zip = [f for f in file_list if f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp', '.bmp', '.gif'))]
+            
+            if not image_files_in_zip:
+                print("❌ ZIP文件中没有找到图片文件")
+                return None
+            
+            print(f"✅ 在ZIP中找到 {len(image_files_in_zip)} 张图片")
+            
+            # 提取文件
+            for i, file_info in enumerate(image_files_in_zip):
+                # 解压文件
+                zip_ref.extract(file_info, extract_dir)
+                extracted_path = os.path.join(extract_dir, file_info)
+                image_files.append(extracted_path)
+                
+                if (i + 1) % 10 == 0:  # 每10个文件显示一次进度
+                    print(f"📥 已提取 {i+1}/{len(image_files_in_zip)} 张图片")
+        
+        # 按文件名自然排序
+        import re
+        image_files.sort(key=lambda x: [int(text) if text.isdigit() else text.lower() 
+                                      for text in re.split(r'(\d+)', x)])
+        
+        return image_files
         
     except Exception as e:
-        print(f"❌ 处理过程中出错: {e}")
+        print(f"❌ 提取ZIP文件失败: {e}")
+        return None
+
+def create_download_package(pdf_files, output_dir, jm_id):
+    """创建下载包"""
+    try:
+        if not pdf_files:
+            print("❌ 没有PDF文件可打包")
+            return None
+        
+        # 如果只有一个PDF文件，直接返回
+        if len(pdf_files) == 1:
+            print(f"📄 单个PDF文件: {Path(pdf_files[0]).name}")
+            return pdf_files[0]
+        
+        # 多个PDF文件，打包成ZIP
+        import zipfile
+        zip_filename = f"jm_{jm_id}_pdfs.zip"
+        zip_path = os.path.join(output_dir, zip_filename)
+        
+        print(f"📦 打包 {len(pdf_files)} 个PDF文件...")
+        
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for pdf_file in pdf_files:
+                if os.path.exists(pdf_file):
+                    arcname = Path(pdf_file).name
+                    zipf.write(pdf_file, arcname)
+                    print(f"   + {arcname}")
+        
+        if os.path.exists(zip_path) and os.path.getsize(zip_path) > 0:
+            print(f"✅ 打包完成: {zip_filename}")
+            return zip_path
+        else:
+            print("❌ 打包失败")
+            return None
+            
+    except Exception as e:
+        print(f"❌ 创建下载包失败: {e}")
+        return None
+
+def process_comic_directly(jm_id, zip_path, download_dir):
+    """
+    直接处理漫画，不依赖Flask Web界面
+    """
+    try:
+        print("🔄 开始直接处理漫画文件...")
+        
+        # 创建临时提取目录
+        extract_dir = os.path.join(download_dir, f"extract_{jm_id}")
+        os.makedirs(extract_dir, exist_ok=True)
+        
+        # 从ZIP提取图片
+        image_files = extract_images_from_zip(zip_path, extract_dir)
+        if not image_files:
+            print("❌ 图片提取失败")
+            safe_remove(extract_dir)
+            return False
+        
+        print(f"✅ 成功提取 {len(image_files)} 张图片")
+        
+        # 直接转换为PDF
+        pdf_path = process_images_to_pdf_directly(image_files, download_dir, f"jm_{jm_id}")
+        
+        # 清理临时文件
+        safe_remove(extract_dir)
+        
+        if pdf_path and os.path.exists(pdf_path):
+            print(f"🎉 PDF生成成功: {Path(pdf_path).name}")
+            
+            # 创建结果清单
+            result_files = [pdf_path]
+            final_package = create_download_package(result_files, download_dir, jm_id)
+            
+            if final_package:
+                print(f"📦 最终文件: {Path(final_package).name}")
+                return True
+            else:
+                print("✅ 单个PDF文件已生成")
+                return True
+        else:
+            print("❌ PDF生成失败")
+            return False
+            
+    except Exception as e:
+        print(f"❌ 直接处理失败: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -220,10 +361,10 @@ def cleanup_files():
                     safe_remove(item_path)
                 print(f"🧹 清理 {temp_dir} 目录")
         
-        # 清理download目录中的zip文件
+        # 清理download目录中的zip文件（保留PDF）
         if os.path.exists('download'):
             for item in os.listdir('download'):
-                if item.endswith('.zip'):
+                if item.endswith('.zip') and 'jm_' in item:
                     zip_path = os.path.join('download', item)
                     safe_remove(zip_path)
             
@@ -251,13 +392,17 @@ def check_download_results():
     print(f"   PDF文件: {len(pdf_files)} 个")
     print(f"   ZIP文件: {len(zip_files)} 个")
     
+    total_size = 0
     for file in files:
         file_path = os.path.join(download_dir, file)
         if os.path.exists(file_path):
             file_size = os.path.getsize(file_path) / (1024 * 1024)
+            total_size += file_size
             print(f"   📄 {file} ({file_size:.1f} MB)")
         else:
             print(f"   📄 {file} (文件不存在)")
+    
+    print(f"📦 总大小: {total_size:.1f} MB")
     
     return len(pdf_files) > 0 or len(zip_files) > 0
 
@@ -283,8 +428,8 @@ def main():
             print("❌ 漫画下载失败")
             sys.exit(1)
         
-        # 转换为PDF
-        success = process_comic_to_pdf(jm_id, zip_path, 'download')
+        # 直接处理为PDF（不依赖Web界面）
+        success = process_comic_directly(jm_id, zip_path, 'download')
         
         if success:
             print("\n🎉 任务完成!")
@@ -293,6 +438,7 @@ def main():
             print("\n📁 最终文件列表:")
             if check_download_results():
                 print("✅ 文件生成成功，可在Artifacts中下载")
+                print("💡 在GitHub Actions页面点击 'Artifacts' 下载生成的文件")
             else:
                 print("❌ 未找到输出文件")
             
