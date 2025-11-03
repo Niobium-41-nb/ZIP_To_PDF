@@ -6,6 +6,7 @@ import os
 import sys
 import time
 import uuid
+import shutil
 from pathlib import Path
 
 def setup_environment():
@@ -16,6 +17,18 @@ def setup_environment():
         os.makedirs(directory, exist_ok=True)
     
     print("✅ 环境设置完成")
+
+def safe_remove(path):
+    """安全删除文件或目录"""
+    try:
+        if os.path.isfile(path):
+            os.remove(path)
+            print(f"🗑️ 删除文件: {Path(path).name}")
+        elif os.path.isdir(path):
+            shutil.rmtree(path)
+            print(f"🗑️ 删除目录: {Path(path).name}")
+    except Exception as e:
+        print(f"⚠️ 删除 {path} 失败: {e}")
 
 def download_jm_comic(jm_id, download_dir):
     """
@@ -52,6 +65,16 @@ def download_jm_comic(jm_id, download_dir):
         
         if not image_files:
             print("❌ 未找到下载的图片文件")
+            # 显示目录内容帮助调试
+            print("📂 目录内容:")
+            for item in os.listdir(comic_dir):
+                item_path = os.path.join(comic_dir, item)
+                if os.path.isdir(item_path):
+                    print(f"   📁 {item}/")
+                    for sub_item in os.listdir(item_path)[:10]:  # 只显示前10个文件
+                        print(f"     📄 {sub_item}")
+                else:
+                    print(f"   📄 {item}")
             return None
         
         print(f"✅ 找到 {len(image_files)} 张图片")
@@ -71,6 +94,10 @@ def download_jm_comic(jm_id, download_dir):
                 zipf.write(img_path, arcname)
         
         print(f"📦 漫画已打包为: {zip_path}")
+        
+        # 清理原始图片目录以节省空间
+        safe_remove(comic_dir)
+        
         return zip_path
         
     except Exception as e:
@@ -104,6 +131,7 @@ def process_comic_to_pdf(jm_id, zip_path, download_dir):
         # 轮询处理状态
         max_wait_time = 600  # 10分钟
         start_time = time.time()
+        last_progress = 0
         
         while time.time() - start_time < max_wait_time:
             if task_id in processing_status:
@@ -119,8 +147,11 @@ def process_comic_to_pdf(jm_id, zip_path, download_dir):
                         
                         print(f"📄 生成 {len(pdf_files)} 个PDF文件:")
                         for pdf in pdf_files:
-                            pdf_size = os.path.getsize(pdf) / (1024 * 1024)
-                            print(f"   - {Path(pdf).name} ({pdf_size:.1f} MB)")
+                            if os.path.exists(pdf):
+                                pdf_size = os.path.getsize(pdf) / (1024 * 1024)
+                                print(f"   - {Path(pdf).name} ({pdf_size:.1f} MB)")
+                            else:
+                                print(f"   - {Path(pdf).name} (文件不存在)")
                         
                         if zip_file and os.path.exists(zip_file):
                             zip_size = os.path.getsize(zip_file) / (1024 * 1024)
@@ -132,11 +163,12 @@ def process_comic_to_pdf(jm_id, zip_path, download_dir):
                     print(f"❌ 处理失败: {status.get('error', '未知错误')}")
                     return False
                 
-                # 显示进度
+                # 显示进度（只在进度更新时显示）
                 progress = status.get('progress', 0)
                 current_step = status.get('current_step', '')
-                if progress > 0:
+                if progress != last_progress:
                     print(f"📊 进度: {progress}% - {current_step}")
+                    last_progress = progress
             
             time.sleep(2)
         
@@ -149,27 +181,55 @@ def process_comic_to_pdf(jm_id, zip_path, download_dir):
         traceback.print_exc()
         return False
 
-def cleanup_files(task_id=None):
-    """清理文件"""
+def cleanup_files():
+    """清理临时文件"""
     try:
-        from app import app
-        from utils.file_utils import FileUtils
+        # 直接使用文件操作而不是导入Flask组件
+        temp_dirs = ['uploads', 'temp', 'outputs']
+        for temp_dir in temp_dirs:
+            if os.path.exists(temp_dir):
+                for item in os.listdir(temp_dir):
+                    item_path = os.path.join(temp_dir, item)
+                    safe_remove(item_path)
+                print(f"🧹 清理 {temp_dir} 目录")
         
-        if task_id:
-            FileUtils.cleanup_task_files(
-                task_id,
-                app.config['UPLOAD_FOLDER'],
-                app.config['TEMP_FOLDER'],
-                app.config['OUTPUT_FOLDER']
-            )
-            print(f"🧹 已清理任务 {task_id} 的临时文件")
-        else:
-            FileUtils.cleanup_old_files(app.config['UPLOAD_FOLDER'], hours_old=0)
-            FileUtils.cleanup_old_files(app.config['TEMP_FOLDER'], hours_old=0)
-            print("🧹 已清理所有临时文件")
+        # 清理download目录中的zip文件
+        if os.path.exists('download'):
+            for item in os.listdir('download'):
+                if item.endswith('.zip'):
+                    zip_path = os.path.join('download', item)
+                    safe_remove(zip_path)
+            
+        print("✅ 文件清理完成")
             
     except Exception as e:
         print(f"⚠️ 清理文件时出错: {e}")
+
+def check_download_results():
+    """检查下载结果"""
+    download_dir = 'download'
+    if not os.path.exists(download_dir):
+        print("❌ download 目录不存在")
+        return False
+    
+    files = os.listdir(download_dir)
+    if not files:
+        print("❌ download 目录为空")
+        return False
+    
+    pdf_files = [f for f in files if f.endswith('.pdf')]
+    zip_files = [f for f in files if f.endswith('.zip')]
+    
+    print(f"📊 结果统计:")
+    print(f"   PDF文件: {len(pdf_files)} 个")
+    print(f"   ZIP文件: {len(zip_files)} 个")
+    
+    for file in files:
+        file_path = os.path.join(download_dir, file)
+        file_size = os.path.getsize(file_path) / (1024 * 1024)
+        print(f"   📄 {file} ({file_size:.1f} MB)")
+    
+    return len(pdf_files) > 0 or len(zip_files) > 0
 
 def main():
     """主函数"""
@@ -186,31 +246,28 @@ def main():
     # 设置环境
     setup_environment()
     
-    # 设置下载目录
-    download_dir = 'download'
-    
     try:
         # 下载漫画
-        zip_path = download_jm_comic(jm_id, download_dir)
+        zip_path = download_jm_comic(jm_id, 'download')
         if not zip_path:
             print("❌ 漫画下载失败")
             sys.exit(1)
         
         # 转换为PDF
-        success = process_comic_to_pdf(jm_id, zip_path, download_dir)
+        success = process_comic_to_pdf(jm_id, zip_path, 'download')
         
         if success:
             print("\n🎉 任务完成!")
             
-            # 显示最终文件列表
-            print("\n📁 生成的文件:")
-            for file in os.listdir(download_dir):
-                if file.endswith(('.pdf', '.zip')):
-                    file_path = os.path.join(download_dir, file)
-                    file_size = os.path.getsize(file_path) / (1024 * 1024)
-                    print(f"   - {file} ({file_size:.1f} MB)")
+            # 检查最终结果
+            print("\n📁 最终文件列表:")
+            if check_download_results():
+                print("✅ 文件生成成功，可在Artifacts中下载")
+            else:
+                print("❌ 未找到输出文件")
             
             # 清理临时文件
+            print("\n🧹 清理临时文件...")
             cleanup_files()
             
         else:

@@ -46,7 +46,7 @@ jobs:
         JM_ID: ${{ inputs.jm_id }}
         CLEANUP_TEMP: ${{ inputs.cleanup_temp }}
       run: |
-        python run.py $JM_ID
+        python github_action.py $JM_ID
 
     - name: Upload PDF results
       uses: actions/upload-artifact@v4
@@ -54,9 +54,18 @@ jobs:
         name: jm-${{ inputs.jm_id }}-pdf
         path: download/
         retention-days: 7
+        if-no-files-found: warn
 
     - name: Clean up workspace
       if: always() && inputs.cleanup_temp
       run: |
-        rm -rf uploads/* temp/* outputs/*
-        find download/ -name "*.zip" -delete
+        # 安全清理，避免目录不存在时报错
+        [ -d "uploads" ] && rm -rf uploads/* || true
+        [ -d "temp" ] && rm -rf temp/* || true
+        [ -d "outputs" ] && rm -rf outputs/* || true
+        [ -d "download" ] && find download/ -name "*.zip" -delete || true
+        echo "🧹 清理完成"
+
+    - name: Test environment
+      run: |
+        python test_github_action.py
