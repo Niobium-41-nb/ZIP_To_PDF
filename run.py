@@ -464,6 +464,8 @@ def main():
                 process_jm_comic(jm_id)
             else:
                 print("无效的JM ID")
+            cleanup_all_temp_files()
+            cleanup_temp_files()
         elif choice == '3':
             cleanup_all_downloads()
         elif choice == '4':
