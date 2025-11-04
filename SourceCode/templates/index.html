@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>压缩包转PDF工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .upload-area {
+            border: 3px dashed #4facfe;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+        
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #e9ecef;
+        }
+        
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #e3f2fd;
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 4em;
+            color: #4facfe;
+            margin-bottom: 20px;
+        }
+        
+        .upload-text {
+            font-size: 1.2em;
+            color: #495057;
+            margin-bottom: 15px;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .upload-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        }
+        
+        .upload-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .progress-container {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        
+        .status-message {
+            background: #e7f3ff;
+            border-left: 4px solid #4facfe;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .result-container {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+        }
+
+        .pdf-list-container {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .pdf-list {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .pdf-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .pdf-item:hover {
+            border-color: #4facfe;
+            box-shadow: 0 2px 8px rgba(79, 172, 254, 0.1);
+        }
+
+        .pdf-info {
+            flex: 1;
+        }
+
+        .pdf-name {
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+
+        .pdf-size {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .pdf-download-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .pdf-download-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.3);
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .supported-formats {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+        }
+        
+        .formats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .format-item {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+        }
+        
+        .format-label {
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .format-ext {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .pdf-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .pdf-download-btn {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>压缩包转PDF工具</h1>
+            <p>上传压缩包，自动解压并将图片转换为PDF</p>
+        </div>
+        
+        <div class="content">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">拖拽文件到此处或点击选择文件</div>
+                <p style="color: #6c757d; margin-bottom: 20px;">支持 ZIP, TAR, RAR, 7Z 等格式</p>
+                <input type="file" id="fileInput" class="file-input" accept=".zip,.tar,.gz,.bz2,.rar,.7z,.tar.gz,.tar.bz2">
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">选择文件</button>
+            </div>
+            
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text">
+                    <span id="progressText">0%</span>
+                    <span id="statusText">等待开始</span>
+                </div>
+                <div class="status-message" id="statusMessage"></div>
+            </div>
+            
+            <div class="error-message" id="errorMessage"></div>
+            
+            <div class="result-container" id="resultContainer">
+                <div style="text-align: center;">
+                    <h3 style="color: #28a745; margin-bottom: 20px;">处理完成！</h3>
+                    <a href="#" class="download-btn" id="downloadBtn">下载PDF文件包</a>
+                </div>
+                
+                <div class="pdf-list-container" id="pdfListContainer" style="margin-top: 30px; display: none;">
+                    <h4 style="color: #495057; margin-bottom: 15px;">生成的PDF文件：</h4>
+                    <div class="pdf-list" id="pdfList"></div>
+                </div>
+            </div>
+            
+            <div class="supported-formats">
+                <h3>支持的文件格式</h3>
+                <div class="formats-grid">
+                    <div class="format-item">
+                        <div class="format-label">压缩格式</div>
+                        <div class="format-ext">ZIP, TAR, RAR, 7Z</div>
+                    </div>
+                    <div class="format-item">
+                        <div class="format-label">图片格式</div>
+                        <div class="format-ext">JPG, PNG, WEBP, GIF, BMP</div>
+                    </div>
+                    <div class="format-item">
+                        <div class="format-label">最大文件</div>
+                        <div class="format-ext">1 GB</div>
+                    </div>
+                    <div class="format-item">
+                        <div class="format-label">输出格式</div>
+                        <div class="format-ext">A4 PDF</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTaskId = null;
+        let statusCheckInterval = null;
+        
+        // 获取DOM元素
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const statusText = document.getElementById('statusText');
+        const statusMessage = document.getElementById('statusMessage');
+        const errorMessage = document.getElementById('errorMessage');
+        const resultContainer = document.getElementById('resultContainer');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const pdfListContainer = document.getElementById('pdfListContainer');
+        const pdfList = document.getElementById('pdfList');
+        
+        // 拖拽事件处理
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+        
+        // 文件选择事件
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+        
+        // 处理文件上传
+        function handleFile(file) {
+            // 重置状态
+            resetUI();
+            
+            // 验证文件类型
+            const allowedExtensions = ['zip', 'tar', 'gz', 'bz2', 'rar', '7z', 'tar.gz', 'tar.bz2'];
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            
+            if (!allowedExtensions.includes(fileExtension) && 
+                !allowedExtensions.includes(file.name.split('.').slice(-2).join('.').toLowerCase())) {
+                showError('不支持的文件格式。请上传ZIP、TAR、RAR或7Z格式的文件。');
+                return;
+            }
+            
+            // 验证文件大小 (1GB = 1024MB)
+            if (file.size > 1024 * 1024 * 1024) {
+                showError('文件大小超过1GB限制。');
+                return;
+            }
+            
+            // 显示进度容器
+            progressContainer.style.display = 'block';
+            statusMessage.style.display = 'block';
+            statusMessage.textContent = '正在上传文件...';
+            
+            // 创建FormData并上传
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                currentTaskId = data.task_id;
+                statusMessage.textContent = '文件上传成功，开始处理...';
+                
+                // 开始轮询状态
+                startStatusPolling();
+            })
+            .catch(error => {
+                showError('上传失败: ' + error.message);
+            });
+        }
+        
+        // 开始轮询处理状态
+        function startStatusPolling() {
+            statusCheckInterval = setInterval(() => {
+                fetch(`/status/${currentTaskId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            clearInterval(statusCheckInterval);
+                            showError(data.error);
+                            return;
+                        }
+                        
+                        // 更新进度
+                        progressFill.style.width = data.progress + '%';
+                        progressText.textContent = data.progress + '%';
+                        statusText.textContent = data.current_step;
+                        statusMessage.textContent = data.status;
+                        
+                        // 检查是否完成
+                        if (data.status === '处理完成') {
+                            clearInterval(statusCheckInterval);
+                            showResult(data);
+                        } else if (data.error) {
+                            clearInterval(statusCheckInterval);
+                            showError(data.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('状态检查失败:', error);
+                    });
+            }, 1000); // 每秒检查一次
+        }
+        
+        // 显示结果
+        function showResult(data) {
+            progressContainer.style.display = 'none';
+            resultContainer.style.display = 'block';
+            
+            if (data.download_url) {
+                downloadBtn.href = data.download_url;
+            }
+
+            // 如果有PDF列表URL，加载PDF文件列表
+            if (data.pdf_list_url) {
+                loadPdfList(data.pdf_list_url);
+            }
+        }
+
+        // 加载PDF文件列表
+        function loadPdfList(pdfListUrl) {
+            fetch(pdfListUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('加载PDF列表失败:', data.error);
+                        return;
+                    }
+
+                    if (data.pdf_files && data.pdf_files.length > 0) {
+                        displayPdfList(data.pdf_files);
+                    }
+                })
+                .catch(error => {
+                    console.error('加载PDF列表失败:', error);
+                });
+        }
+
+        // 显示PDF文件列表
+        function displayPdfList(pdfFiles) {
+            pdfList.innerHTML = '';
+            
+            pdfFiles.forEach(pdfFile => {
+                const pdfItem = document.createElement('div');
+                pdfItem.className = 'pdf-item';
+                
+                const pdfInfo = document.createElement('div');
+                pdfInfo.className = 'pdf-info';
+                
+                const pdfName = document.createElement('div');
+                pdfName.className = 'pdf-name';
+                pdfName.textContent = pdfFile.filename;
+                
+                const pdfSize = document.createElement('div');
+                pdfSize.className = 'pdf-size';
+                pdfSize.textContent = formatFileSize(pdfFile.size);
+                
+                pdfInfo.appendChild(pdfName);
+                pdfInfo.appendChild(pdfSize);
+                
+                const downloadBtn = document.createElement('a');
+                downloadBtn.className = 'pdf-download-btn';
+                downloadBtn.href = pdfFile.download_url;
+                downloadBtn.textContent = '下载';
+                downloadBtn.target = '_blank';
+                
+                pdfItem.appendChild(pdfInfo);
+                pdfItem.appendChild(downloadBtn);
+                
+                pdfList.appendChild(pdfItem);
+            });
+            
+            pdfListContainer.style.display = 'block';
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // 显示错误信息
+        function showError(message) {
+            progressContainer.style.display = 'none';
+            errorMessage.style.display = 'block';
+            errorMessage.textContent = message;
+        }
+        
+        // 重置UI状态
+        function resetUI() {
+            progressContainer.style.display = 'none';
+            errorMessage.style.display = 'none';
+            resultContainer.style.display = 'none';
+            pdfListContainer.style.display = 'none';
+            progressFill.style.width = '0%';
+            progressText.textContent = '0%';
+            statusText.textContent = '等待开始';
+            
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+            }
+        }
+        
+        // 页面加载时重置状态
+        window.addEventListener('load', resetUI);
+    </script>
+</body>
+</html>
