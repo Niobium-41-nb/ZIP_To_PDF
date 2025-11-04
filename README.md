@@ -1,4 +1,4 @@
-# Flask压缩包转PDF工具 + JM漫画下载器
+# Flask压缩包转PDF工具
 
 一个基于Python Flask的Web应用，能够处理嵌套压缩包，提取其中的图片文件并转换为PDF。同时支持直接从JM漫画下载漫画并自动转换为PDF。
 
