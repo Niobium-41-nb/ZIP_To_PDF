@@ -323,6 +323,66 @@ def cleanup_all_downloads():
         print(f"清理下载文件失败: {e}")
         return False
 
+def cleanup_all_temp_files():
+    """
+    专门清理temp文件夹中的所有内容
+    包括所有临时任务文件夹、PNG图片和压缩包
+    """
+    try:
+        from config import config
+        
+        config_obj = config['default']
+        temp_dir = config_obj.TEMP_FOLDER
+        
+        print("开始清理temp文件夹...")
+        
+        if not os.path.exists(temp_dir):
+            print(f"temp文件夹不存在: {temp_dir}")
+            return True
+        
+        # 统计信息
+        total_files = 0
+        total_size = 0
+        
+        # 递归遍历temp文件夹
+        for root, dirs, files in os.walk(temp_dir, topdown=False):
+            for file in files:
+                file_path = os.path.join(root, file)
+                try:
+                    # 删除所有文件，不限制类型
+                    file_size = os.path.getsize(file_path)
+                    os.remove(file_path)
+                    print(f"已删除: {os.path.relpath(file_path, temp_dir)} ({file_size / 1024 / 1024:.1f} MB)")
+                    total_files += 1
+                    total_size += file_size
+                except Exception as e:
+                    print(f"删除文件失败 {file_path}: {e}")
+            
+            # 删除空文件夹（除了temp根目录）
+            if root != temp_dir:
+                try:
+                    # 检查文件夹是否为空
+                    if not os.listdir(root):
+                        os.rmdir(root)
+                        print(f"已删除空文件夹: {os.path.relpath(root, temp_dir)}")
+                except Exception as e:
+                    print(f"删除文件夹失败 {root}: {e}")
+        
+        # 显示清理结果
+        if total_files > 0:
+            print(f"\n清理完成！")
+            print(f"总计: 删除 {total_files} 个文件，释放 {total_size / 1024 / 1024:.1f} MB 空间")
+        else:
+            print("temp文件夹为空，无需清理")
+        
+        return True
+        
+    except Exception as e:
+        print(f"清理temp文件夹失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
 def is_github_actions():
     """检查是否在 GitHub Actions 环境中运行"""
     return os.getenv('GITHUB_ACTIONS') == 'true'
@@ -343,6 +403,7 @@ def main():
     parser.add_argument('--web', action='store_true', help='启动Web界面')
     parser.add_argument('--cleanup', action='store_true', help='清理所有下载文件')
     parser.add_argument('--cleanup-temp', action='store_true', help='清理临时文件')
+    parser.add_argument('--cleanup-all-temp', action='store_true', help='清理temp文件夹中的所有内容')
     
     args = parser.parse_args()
     
@@ -369,6 +430,10 @@ def main():
         # 清理临时文件
         cleanup_temp_files()
         return
+    elif args.cleanup_all_temp:
+        # 清理temp文件夹中的所有内容
+        cleanup_all_temp_files()
+        return
     elif args.web:
         # 启动Web应用
         start_web_app()
@@ -387,8 +452,9 @@ def main():
         print("2. 下载JM漫画并转换为PDF")
         print("3. 清理下载文件")
         print("4. 清理临时文件")
+        print("5. 清理temp文件夹中的所有内容")
         
-        choice = input("\n请输入选择 (1-4): ").strip()
+        choice = input("\n请输入选择 (1-5): ").strip()
         
         if choice == '1':
             start_web_app()
@@ -402,6 +468,8 @@ def main():
             cleanup_all_downloads()
         elif choice == '4':
             cleanup_temp_files()
+        elif choice == '5':
+            cleanup_all_temp_files()
         else:
             print("无效的选择")
 
