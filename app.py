@@ -156,6 +156,80 @@ def process_compressed_file(task_id, file_path, output_dir):
         except Exception as cleanup_error:
             print(f"清理临时文件失败: {cleanup_error}")
 
+def process_jm_comic_task(task_id, jm_id, output_dir):
+    """处理JM漫画下载和转换的后台任务"""
+    task = ProcessingTask(task_id)
+    
+    try:
+        # 更新任务状态
+        task.update_status("开始下载JM漫画", 10, "下载漫画")
+        
+        # 使用github_action.py中的下载逻辑
+        from github_action import download_jm_comic, process_comic_directly
+        
+        # 设置下载目录
+        download_dir = 'download'
+        os.makedirs(download_dir, exist_ok=True)
+        
+        # 下载漫画
+        task.update_status("正在下载漫画", 20, "下载中")
+        zip_path = download_jm_comic(jm_id, download_dir)
+        
+        if not zip_path:
+            task.update_status("漫画下载失败", 100, "错误")
+            task.error = "漫画下载失败"
+            return
+            
+        task.update_status("漫画下载完成", 40, "下载完成")
+        
+        # 处理漫画
+        task.update_status("开始处理漫画", 50, "处理中")
+        success = process_comic_directly(jm_id, zip_path, download_dir)
+        
+        if success:
+            # 查找生成的PDF文件
+            pdf_files = []
+            for file in os.listdir(download_dir):
+                if file.endswith('.pdf') and f"jm_{jm_id}" in file:
+                    pdf_files.append(os.path.join(download_dir, file))
+            
+            if pdf_files:
+                # 如果只有一个PDF，直接作为结果
+                if len(pdf_files) == 1:
+                    task.result_files = [pdf_files[0]]
+                    processing_results[task_id] = {
+                        'pdf_files': pdf_files,
+                        'zip_file': pdf_files[0]  # 单个文件也作为zip_file返回
+                    }
+                else:
+                    # 多个PDF文件，打包成ZIP
+                    import zipfile
+                    zip_path = os.path.join(output_dir, f"jm_{jm_id}_result.zip")
+                    
+                    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                        for pdf_file in pdf_files:
+                            zipf.write(pdf_file, os.path.basename(pdf_file))
+                    
+                    task.result_files = [zip_path]
+                    processing_results[task_id] = {
+                        'pdf_files': pdf_files,
+                        'zip_file': zip_path
+                    }
+                
+                task.update_status("处理完成", 100, "完成")
+            else:
+                task.update_status("未找到生成的PDF文件", 100, "错误")
+                task.error = "未找到生成的PDF文件"
+        else:
+            task.update_status("漫画处理失败", 100, "错误")
+            task.error = "漫画处理失败"
+            
+    except Exception as e:
+        task.update_status(f"处理失败: {str(e)}", 100, "错误")
+        task.error = str(e)
+        import traceback
+        traceback.print_exc()
+
 @app.route('/')
 def index():
     """主页"""
@@ -228,7 +302,13 @@ def get_status(task_id):
         
         return jsonify(status_info)
     else:
-        return jsonify({'error': '任务不存在'}), 404
+        # 任务不存在时返回等待状态，而不是错误
+        return jsonify({
+            'status': '等待开始',
+            'progress': 0,
+            'current_step': '任务初始化中',
+            'error': None
+        })
 
 @app.route('/download/<task_id>')
 def download_result(task_id):
@@ -258,6 +338,24 @@ def download_single_pdf(task_id, pdf_index):
     
     return jsonify({'error': 'PDF文件不存在'}), 404
 
+@app.route('/preview/pdf/<task_id>/<int:pdf_index>')
+def preview_single_pdf(task_id, pdf_index):
+    """预览单个PDF文件（内嵌显示）"""
+    if task_id in processing_results:
+        result = processing_results[task_id]
+        pdf_files = result.get('pdf_files', [])
+        
+        if 0 <= pdf_index < len(pdf_files):
+            pdf_file = pdf_files[pdf_index]
+            if os.path.exists(pdf_file):
+                # 设置正确的MIME类型和内嵌显示头信息
+                response = send_file(pdf_file)
+                response.headers['Content-Type'] = 'application/pdf'
+                response.headers['Content-Disposition'] = f'inline; filename="{os.path.basename(pdf_file)}"'
+                return response
+    
+    return jsonify({'error': 'PDF文件不存在'}), 404
+
 @app.route('/download/list/<task_id>')
 def list_pdf_files(task_id):
     """获取PDF文件列表"""
@@ -272,13 +370,57 @@ def list_pdf_files(task_id):
                     'index': i,
                     'filename': os.path.basename(pdf_file),
                     'size': os.path.getsize(pdf_file),
-                    'download_url': f'/download/pdf/{task_id}/{i}'
+                    'download_url': f'/download/pdf/{task_id}/{i}',
+                    'preview_url': f'/preview/pdf/{task_id}/{i}'  # 添加预览URL
                 }
                 file_list.append(file_info)
         
         return jsonify({'pdf_files': file_list})
     
     return jsonify({'error': '任务不存在'}), 404
+
+@app.route('/download_jm', methods=['POST'])
+def download_jm_comic():
+    """JM漫画下载接口"""
+    try:
+        data = request.get_json()
+        jm_id = data.get('jm_id')
+        
+        if not jm_id:
+            return jsonify({'error': '缺少JM漫画ID'}), 400
+        
+        # 验证JM ID格式
+        if not jm_id.isdigit():
+            return jsonify({'error': 'JM漫画ID必须是数字'}), 400
+            
+        # 生成任务ID
+        task_id = str(uuid.uuid4())
+        
+        # 立即创建任务状态记录，避免"任务不存在"错误
+        processing_status[task_id] = {
+            'status': '开始下载',
+            'progress': 0,
+            'current_step': '初始化',
+            'error': None
+        }
+        
+        # 启动后台处理任务
+        output_dir = app.config['OUTPUT_FOLDER']
+        thread = threading.Thread(
+            target=process_jm_comic_task,
+            args=(task_id, jm_id, output_dir)
+        )
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'task_id': task_id, 
+            'message': '开始下载JM漫画',
+            'status': '开始下载'
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'下载失败: {str(e)}'}), 500
 
 @app.route('/cleanup', methods=['POST'])
 def cleanup_files():

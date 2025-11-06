@@ -3,117 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>压缩包转PDF工具</title>
+    <title>压缩包转PDF工具 - JM漫画下载</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
+            color: #333;
         }
-        
+
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: white;
             border-radius: 15px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             overflow: hidden;
         }
-        
+
         .header {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            background: linear-gradient(135deg, #4facfe 0%, #0072fe 100%);
             color: white;
-            padding: 30px;
+            padding: 25px;
             text-align: center;
         }
-        
+
         .header h1 {
-            font-size: 2.5em;
+            font-size: 2.2em;
             margin-bottom: 10px;
             font-weight: 300;
         }
-        
+
         .header p {
-            font-size: 1.1em;
+            font-size: 1em;
             opacity: 0.9;
         }
-        
+
         .content {
-            padding: 40px;
+            padding: 30px;
         }
-        
+
+        .tabs {
+            display: flex;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .tab {
+            padding: 12px 25px;
+            cursor: pointer;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            border-bottom: 3px solid #4facfe;
+            color: #4facfe;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
         .upload-area {
             border: 3px dashed #4facfe;
             border-radius: 10px;
-            padding: 40px;
+            padding: 30px;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             transition: all 0.3s ease;
             background: #f8f9fa;
         }
-        
+
         .upload-area:hover {
             border-color: #667eea;
             background: #e9ecef;
         }
-        
+
         .upload-area.dragover {
             border-color: #667eea;
             background: #e3f2fd;
             transform: scale(1.02);
         }
-        
+
         .upload-icon {
-            font-size: 4em;
+            font-size: 3.5em;
             color: #4facfe;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
-        
+
         .upload-text {
-            font-size: 1.2em;
+            font-size: 1.1em;
             color: #495057;
             margin-bottom: 15px;
         }
-        
+
         .file-input {
             display: none;
         }
-        
-        .upload-btn {
+
+        .btn {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
             border: none;
-            padding: 12px 30px;
+            padding: 12px 25px;
             border-radius: 25px;
-            font-size: 1.1em;
+            font-size: 1em;
             cursor: pointer;
             transition: all 0.3s ease;
+            display: inline-block;
+            text-decoration: none;
         }
-        
-        .upload-btn:hover {
+
+        .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
         }
-        
-        .upload-btn:disabled {
+
+        .btn:disabled {
             background: #6c757d;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
-        
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .btn-success:hover {
+            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 10px 20px rgba(108, 117, 125, 0.3);
+        }
+
+        .jm-input-container {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .jm-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ced4da;
+            border-radius: 25px 0 0 25px;
+            font-size: 1em;
+            outline: none;
+        }
+
+        .jm-input:focus {
+            border-color: #4facfe;
+        }
+
+        .jm-btn {
+            border-radius: 0 25px 25px 0;
+            padding: 12px 25px;
+        }
+
         .progress-container {
-            margin-top: 30px;
+            margin-top: 25px;
             display: none;
         }
-        
+
         .progress-bar {
             width: 100%;
             height: 20px;
@@ -122,7 +191,7 @@
             overflow: hidden;
             margin-bottom: 10px;
         }
-        
+
         .progress-fill {
             height: 100%;
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
@@ -130,14 +199,14 @@
             transition: width 0.3s ease;
             width: 0%;
         }
-        
+
         .progress-text {
             display: flex;
             justify-content: space-between;
             font-size: 0.9em;
             color: #6c757d;
         }
-        
+
         .status-message {
             background: #e7f3ff;
             border-left: 4px solid #4facfe;
@@ -146,28 +215,62 @@
             border-radius: 5px;
             display: none;
         }
-        
+
         .result-container {
-            margin-top: 30px;
+            margin-top: 25px;
             display: none;
         }
-        
-        .download-btn {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            border-radius: 25px;
-            font-size: 1.2em;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
+
+        .error-message {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            display: none;
         }
-        
-        .download-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+
+        .supported-formats {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 25px;
+        }
+
+        .formats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .format-item {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+        }
+
+        .format-label {
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .format-ext {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
         .pdf-list-container {
@@ -179,7 +282,7 @@
             background: #f8f9fa;
             border-radius: 10px;
             padding: 20px;
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
         }
 
@@ -215,7 +318,12 @@
             color: #6c757d;
         }
 
-        .pdf-download-btn {
+        .pdf-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .pdf-preview-btn, .pdf-download-btn {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
             border: none;
@@ -227,79 +335,139 @@
             transition: all 0.3s ease;
         }
 
-        .pdf-download-btn:hover {
+        .pdf-preview-btn {
+            background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+        }
+
+        .pdf-preview-btn:hover, .pdf-download-btn:hover {
             transform: translateY(-1px);
             box-shadow: 0 5px 15px rgba(79, 172, 254, 0.3);
         }
-        
-        .error-message {
-            background: #f8d7da;
-            border-left: 4px solid #dc3545;
-            color: #721c24;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 5px;
+
+        /* PDF预览模态框样式 */
+        .modal {
             display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
         }
-        
-        .supported-formats {
-            background: #f8f9fa;
+
+        .modal-content {
+            position: relative;
+            background-color: #fefefe;
+            margin: 2% auto;
             padding: 20px;
             border-radius: 10px;
-            margin-top: 30px;
+            width: 90%;
+            max-width: 800px;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
         }
-        
-        .formats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e9ecef;
         }
-        
-        .format-item {
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            text-align: center;
-            border: 1px solid #dee2e6;
-        }
-        
-        .format-label {
-            font-weight: bold;
+
+        .modal-title {
+            font-size: 1.2em;
+            font-weight: 500;
             color: #495057;
         }
-        
-        .format-ext {
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
             color: #6c757d;
-            font-size: 0.9em;
+            padding: 5px;
         }
-        
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #4facfe;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+
+        .close-btn:hover {
+            color: #495057;
         }
-        
+
+        .pdf-viewer {
+            flex: 1;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .pdf-viewer iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
+
+        .instructions {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
         @media (max-width: 768px) {
             .container {
                 margin: 10px;
             }
-            
+
             .content {
                 padding: 20px;
             }
-            
+
             .header h1 {
-                font-size: 2em;
+                font-size: 1.8em;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+            }
+
+            .tab {
+                flex: 1;
+                min-width: 120px;
+                text-align: center;
+            }
+
+            .jm-input-container {
+                flex-direction: column;
+            }
+
+            .jm-input {
+                border-radius: 25px;
+                margin-bottom: 10px;
+            }
+
+            .jm-btn {
+                border-radius: 25px;
             }
 
             .pdf-item {
@@ -308,8 +476,16 @@
                 gap: 10px;
             }
 
-            .pdf-download-btn {
+            .pdf-actions {
                 align-self: flex-end;
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .modal-content {
+                width: 95%;
+                height: 95vh;
+                margin: 2.5% auto;
             }
         }
     </style>
@@ -318,72 +494,152 @@
     <div class="container">
         <div class="header">
             <h1>压缩包转PDF工具</h1>
-            <p>上传压缩包，自动解压并将图片转换为PDF</p>
+            <p>支持压缩包转PDF和JM漫画下载</p>
         </div>
-        
+
         <div class="content">
-            <div class="upload-area" id="uploadArea">
-                <div class="upload-icon">📁</div>
-                <div class="upload-text">拖拽文件到此处或点击选择文件</div>
-                <p style="color: #6c757d; margin-bottom: 20px;">支持 ZIP, TAR, RAR, 7Z 等格式</p>
-                <input type="file" id="fileInput" class="file-input" accept=".zip,.tar,.gz,.bz2,.rar,.7z,.tar.gz,.tar.bz2">
-                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">选择文件</button>
+            <div class="tabs">
+                <div class="tab active" data-tab="upload">压缩包转PDF</div>
+                <div class="tab" data-tab="jm">JM漫画下载</div>
             </div>
-            
-            <div class="progress-container" id="progressContainer">
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
+
+            <!-- 压缩包转PDF标签内容 -->
+            <div class="tab-content active" id="upload-tab">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">拖拽文件到此处或点击选择文件</div>
+                    <p style="color: #6c757d; margin-bottom: 15px;">支持 ZIP, TAR, RAR, 7Z 等格式</p>
+                    <input type="file" id="fileInput" class="file-input" accept=".zip,.tar,.gz,.bz2,.rar,.7z,.tar.gz,.tar.bz2">
+                    <button class="btn" onclick="document.getElementById('fileInput').click()">选择文件</button>
                 </div>
-                <div class="progress-text">
-                    <span id="progressText">0%</span>
-                    <span id="statusText">等待开始</span>
+
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="progressText">0%</span>
+                        <span id="statusText">等待开始</span>
+                    </div>
+                    <div class="status-message" id="statusMessage"></div>
                 </div>
-                <div class="status-message" id="statusMessage"></div>
+
+                <div class="error-message" id="errorMessage"></div>
+
+                <div class="result-container" id="resultContainer">
+                    <div style="text-align: center;"> 
+                        <h3 style="color: #28a745; margin-bottom: 20px;">处理完成！</h3>
+                        <a href="#" class="btn btn-success" id="downloadBtn">下载PDF文件包</a>
+                        <button class="btn btn-secondary" id="showPdfListBtn" style="margin-left: 10px;">查看PDF文件列表</button>
+                    </div>
+                    <div class="pdf-list-container" id="pdfListContainer">
+                        <h4 style="color: #495057; margin-bottom: 15px;">生成的PDF文件：</h4>
+                        <div class="pdf-list" id="pdfList"></div>
+                    </div>
+                </div>
+
+                <div class="supported-formats">
+                    <h3>支持的文件格式</h3>
+                    <div class="formats-grid">
+                        <div class="format-item">
+                            <div class="format-label">压缩格式</div>
+                            <div class="format-ext">ZIP, TAR, RAR, 7Z</div>
+                        </div>
+                        <div class="format-item">
+                            <div class="format-label">图片格式</div>
+                            <div class="format-ext">JPG, PNG, WEBP, GIF, BMP</div>
+                        </div>
+                        <div class="format-item">
+                            <div class="format-label">最大文件</div>
+                            <div class="format-ext">1 GB</div>
+                        </div>
+                        <div class="format-item">
+                            <div class="format-label">输出格式</div>
+                            <div class="format-ext">A4 PDF</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <div class="error-message" id="errorMessage"></div>
-            
-            <div class="result-container" id="resultContainer">
-                <div style="text-align: center;">
-                    <h3 style="color: #28a745; margin-bottom: 20px;">处理完成！</h3>
-                    <a href="#" class="download-btn" id="downloadBtn">下载PDF文件包</a>
+
+            <!-- JM漫画下载标签内容 -->
+            <div class="tab-content" id="jm-tab">
+                <div class="instructions">
+                    <p><strong>使用说明：</strong> 输入JM漫画ID，系统将自动下载漫画并转换为PDF格式。</p>
+                    <p>例如：JM漫画网址为 https://jmcomic.com/422866/，则ID为 422866</p>
                 </div>
-                
-                <div class="pdf-list-container" id="pdfListContainer" style="margin-top: 30px; display: none;">
-                    <h4 style="color: #495057; margin-bottom: 15px;">生成的PDF文件：</h4>
-                    <div class="pdf-list" id="pdfList"></div>
+
+                <div class="jm-input-container">
+                    <input type="text" class="jm-input" id="jmIdInput" placeholder="请输入JM漫画ID (例如: 422866)">
+                    <button class="btn jm-btn" id="jmDownloadBtn">下载并转换</button>
                 </div>
-            </div>
-            
-            <div class="supported-formats">
-                <h3>支持的文件格式</h3>
-                <div class="formats-grid">
-                    <div class="format-item">
-                        <div class="format-label">压缩格式</div>
-                        <div class="format-ext">ZIP, TAR, RAR, 7Z</div>
+
+                <div class="progress-container" id="jmProgressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="jmProgressFill"></div>
                     </div>
-                    <div class="format-item">
-                        <div class="format-label">图片格式</div>
-                        <div class="format-ext">JPG, PNG, WEBP, GIF, BMP</div>
+                    <div class="progress-text">
+                        <span id="jmProgressText">0%</span>
+                        <span id="jmStatusText">等待开始</span>
                     </div>
-                    <div class="format-item">
-                        <div class="format-label">最大文件</div>
-                        <div class="format-ext">1 GB</div>
+                    <div class="status-message" id="jmStatusMessage"></div>
+                </div>
+
+                <div class="error-message" id="jmErrorMessage"></div>
+
+                <div class="result-container" id="jmResultContainer">
+                    <div style="text-align: center;"> 
+                        <h3 style="color: #28a745; margin-bottom: 20px;">下载完成！</h3>
+                        <a href="#" class="btn btn-success" id="jmDownloadBtnResult">下载PDF文件包</a>
+                        <button class="btn btn-secondary" id="jmShowPdfListBtn" style="margin-left: 10px;">查看PDF文件列表</button>
                     </div>
-                    <div class="format-item">
-                        <div class="format-label">输出格式</div>
-                        <div class="format-ext">A4 PDF</div>
+                    <div class="pdf-list-container" id="jmPdfListContainer">
+                        <h4 style="color: #495057; margin-bottom: 15px;">生成的PDF文件：</h4>
+                        <div class="pdf-list" id="jmPdfList"></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- PDF预览模态框 -->
+    <div class="modal" id="pdfPreviewModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="pdfPreviewTitle">PDF预览</div>
+                <button class="close-btn" id="closePreviewBtn">&times;</button>
+            </div>
+            <div class="pdf-viewer">
+                <iframe id="pdfPreviewFrame" src=""></iframe>
+            </div>
+            <div class="modal-actions">
+                <a href="#" class="btn" id="pdfPreviewDownloadBtn">下载PDF</a>
+                <button class="btn btn-secondary" id="closeModalBtn">关闭</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        let currentTaskId = null;
-        let statusCheckInterval = null;
-        
-        // 获取DOM元素
+        // 标签切换功能
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // 移除所有标签的活动状态
+                document.querySelectorAll('.tab').forEach(t => {
+                    t.classList.remove('active');
+                });
+                // 隐藏所有标签内容
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // 设置当前标签为活动状态
+                tab.classList.add('active');
+                // 显示对应的标签内容
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+
+        // 压缩包转PDF功能
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const progressContainer = document.getElementById('progressContainer');
@@ -394,36 +650,41 @@
         const errorMessage = document.getElementById('errorMessage');
         const resultContainer = document.getElementById('resultContainer');
         const downloadBtn = document.getElementById('downloadBtn');
+        const showPdfListBtn = document.getElementById('showPdfListBtn');
         const pdfListContainer = document.getElementById('pdfListContainer');
         const pdfList = document.getElementById('pdfList');
-        
+
+        let currentTaskId = null;
+        let statusCheckInterval = null;
+        let currentPdfFiles = [];
+
         // 拖拽事件处理
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             uploadArea.classList.add('dragover');
         });
-        
+
         uploadArea.addEventListener('dragleave', () => {
             uploadArea.classList.remove('dragover');
         });
-        
+
         uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
-            
+
             const files = e.dataTransfer.files;
             if (files.length > 0) {
                 handleFile(files[0]);
             }
         });
-        
+
         // 文件选择事件
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
                 handleFile(e.target.files[0]);
             }
         });
-        
+
         // 处理文件上传
         function handleFile(file) {
             // 重置状态
@@ -432,28 +693,28 @@
             // 验证文件类型
             const allowedExtensions = ['zip', 'tar', 'gz', 'bz2', 'rar', '7z', 'tar.gz', 'tar.bz2'];
             const fileExtension = file.name.split('.').pop().toLowerCase();
+            const doubleExtension = file.name.split('.').slice(-2).join('.').toLowerCase();
             
-            if (!allowedExtensions.includes(fileExtension) && 
-                !allowedExtensions.includes(file.name.split('.').slice(-2).join('.').toLowerCase())) {
+            if (!allowedExtensions.includes(fileExtension) && !allowedExtensions.includes(doubleExtension)) {
                 showError('不支持的文件格式。请上传ZIP、TAR、RAR或7Z格式的文件。');
                 return;
             }
-            
-            // 验证文件大小 (1GB = 1024MB)
+
+            // 验证文件大小（1GB = 1024MB）
             if (file.size > 1024 * 1024 * 1024) {
                 showError('文件大小超过1GB限制。');
                 return;
             }
-            
+
             // 显示进度容器
             progressContainer.style.display = 'block';
             statusMessage.style.display = 'block';
             statusMessage.textContent = '正在上传文件...';
-            
+
             // 创建FormData并上传
             const formData = new FormData();
             formData.append('file', file);
-            
+
             fetch('/upload', {
                 method: 'POST',
                 body: formData
@@ -464,10 +725,10 @@
                     showError(data.error);
                     return;
                 }
-                
+
                 currentTaskId = data.task_id;
                 statusMessage.textContent = '文件上传成功，开始处理...';
-                
+
                 // 开始轮询状态
                 startStatusPolling();
             })
@@ -475,45 +736,45 @@
                 showError('上传失败: ' + error.message);
             });
         }
-        
+
         // 开始轮询处理状态
         function startStatusPolling() {
             statusCheckInterval = setInterval(() => {
                 fetch(`/status/${currentTaskId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.error) {
-                            clearInterval(statusCheckInterval);
-                            showError(data.error);
-                            return;
-                        }
-                        
-                        // 更新进度
-                        progressFill.style.width = data.progress + '%';
-                        progressText.textContent = data.progress + '%';
-                        statusText.textContent = data.current_step;
-                        statusMessage.textContent = data.status;
-                        
-                        // 检查是否完成
-                        if (data.status === '处理完成') {
-                            clearInterval(statusCheckInterval);
-                            showResult(data);
-                        } else if (data.error) {
-                            clearInterval(statusCheckInterval);
-                            showError(data.error);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('状态检查失败:', error);
-                    });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        clearInterval(statusCheckInterval);
+                        showError(data.error);
+                        return;
+                    }
+                    
+                    // 更新进度
+                    progressFill.style.width = data.progress + '%';
+                    progressText.textContent = data.progress + '%';
+                    statusText.textContent = data.current_step;
+                    statusMessage.textContent = data.status;
+
+                    // 检查是否完成
+                    if (data.status === '处理完成') {
+                        clearInterval(statusCheckInterval);
+                        showResult(data);
+                    } else if (data.error) {
+                        clearInterval(statusCheckInterval);
+                        showError(data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('状态检查失败:', error);
+                });
             }, 1000); // 每秒检查一次
         }
-        
+
         // 显示结果
         function showResult(data) {
             progressContainer.style.display = 'none';
             resultContainer.style.display = 'block';
-            
+
             if (data.download_url) {
                 downloadBtn.href = data.download_url;
             }
@@ -527,26 +788,25 @@
         // 加载PDF文件列表
         function loadPdfList(pdfListUrl) {
             fetch(pdfListUrl)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        console.error('加载PDF列表失败:', data.error);
-                        return;
-                    }
-
-                    if (data.pdf_files && data.pdf_files.length > 0) {
-                        displayPdfList(data.pdf_files);
-                    }
-                })
-                .catch(error => {
-                    console.error('加载PDF列表失败:', error);
-                });
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('加载PDF列表失败:', data.error);
+                    return;
+                }
+                if (data.pdf_files && data.pdf_files.length > 0) {
+                    currentPdfFiles = data.pdf_files;
+                    displayPdfList(data.pdf_files, pdfList);
+                }
+            })
+            .catch(error => {
+                console.error('加载PDF列表失败:', error);
+            });
         }
 
         // 显示PDF文件列表
-        function displayPdfList(pdfFiles) {
-            pdfList.innerHTML = '';
-            
+        function displayPdfList(pdfFiles, container) {
+            container.innerHTML = '';
             pdfFiles.forEach(pdfFile => {
                 const pdfItem = document.createElement('div');
                 pdfItem.className = 'pdf-item';
@@ -565,37 +825,42 @@
                 pdfInfo.appendChild(pdfName);
                 pdfInfo.appendChild(pdfSize);
                 
+                const pdfActions = document.createElement('div');
+                pdfActions.className = 'pdf-actions';
+                
+                const previewBtn = document.createElement('button');
+                previewBtn.className = 'pdf-preview-btn';
+                previewBtn.textContent = '预览';
+                previewBtn.onclick = () => previewPdf(pdfFile);
+                
                 const downloadBtn = document.createElement('a');
                 downloadBtn.className = 'pdf-download-btn';
                 downloadBtn.href = pdfFile.download_url;
                 downloadBtn.textContent = '下载';
                 downloadBtn.target = '_blank';
                 
-                pdfItem.appendChild(pdfInfo);
-                pdfItem.appendChild(downloadBtn);
+                pdfActions.appendChild(previewBtn);
+                pdfActions.appendChild(downloadBtn);
                 
-                pdfList.appendChild(pdfItem);
+                pdfItem.appendChild(pdfInfo);
+                pdfItem.appendChild(pdfActions);
+                
+                container.appendChild(pdfItem);
             });
-            
-            pdfListContainer.style.display = 'block';
         }
 
-        // 格式化文件大小
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-        
+        // 显示PDF列表按钮事件
+        showPdfListBtn.addEventListener('click', () => {
+            pdfListContainer.style.display = pdfListContainer.style.display === 'none' ? 'block' : 'none';
+        });
+
         // 显示错误信息
         function showError(message) {
             progressContainer.style.display = 'none';
             errorMessage.style.display = 'block';
             errorMessage.textContent = message;
         }
-        
+
         // 重置UI状态
         function resetUI() {
             progressContainer.style.display = 'none';
@@ -605,14 +870,250 @@
             progressFill.style.width = '0%';
             progressText.textContent = '0%';
             statusText.textContent = '等待开始';
-            
+            currentPdfFiles = [];
+
             if (statusCheckInterval) {
                 clearInterval(statusCheckInterval);
             }
         }
-        
+
+        // JM漫画下载功能
+        const jmIdInput = document.getElementById('jmIdInput');
+        const jmDownloadBtn = document.getElementById('jmDownloadBtn');
+        const jmProgressContainer = document.getElementById('jmProgressContainer');
+        const jmProgressFill = document.getElementById('jmProgressFill');
+        const jmProgressText = document.getElementById('jmProgressText');
+        const jmStatusText = document.getElementById('jmStatusText');
+        const jmStatusMessage = document.getElementById('jmStatusMessage');
+        const jmErrorMessage = document.getElementById('jmErrorMessage');
+        const jmResultContainer = document.getElementById('jmResultContainer');
+        const jmDownloadBtnResult = document.getElementById('jmDownloadBtnResult');
+        const jmShowPdfListBtn = document.getElementById('jmShowPdfListBtn');
+        const jmPdfListContainer = document.getElementById('jmPdfListContainer');
+        const jmPdfList = document.getElementById('jmPdfList');
+
+        let jmCurrentTaskId = null;
+        let jmStatusCheckInterval = null;
+        let jmCurrentPdfFiles = [];
+
+        // JM下载按钮点击事件
+        jmDownloadBtn.addEventListener('click', () => {
+            const jmId = jmIdInput.value.trim();
+            
+            if (!jmId) {
+                jmShowError('请输入JM漫画ID');
+                return;
+            }
+            
+            if (!/^\d+$/.test(jmId)) {
+                jmShowError('JM漫画ID必须是数字');
+                return;
+            }
+            
+            jmResetUI();
+            jmStartDownload(jmId);
+        });
+
+        // 开始JM下载
+        function jmStartDownload(jmId) {
+            jmProgressContainer.style.display = 'block';
+            jmStatusMessage.style.display = 'block';
+            jmStatusMessage.textContent = '开始下载JM漫画...';
+
+            // 发送下载请求
+            fetch('/download_jm', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ jm_id: jmId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    jmShowError(data.error);
+                    return;
+                }
+
+                jmCurrentTaskId = data.task_id;
+                jmStatusMessage.textContent = '漫画下载成功，开始处理...';
+
+                // 开始轮询状态
+                jmStartStatusPolling();
+            })
+            .catch(error => {
+                jmShowError('下载失败: ' + error.message);
+            });
+        }
+
+        // 开始轮询JM处理状态
+        function jmStartStatusPolling() {
+            let retryCount = 0;
+            const maxRetries = 30;
+            
+            jmStatusCheckInterval = setInterval(() => {
+                fetch(`/status/${jmCurrentTaskId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(errorData => {
+                            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        if (data.error.includes('任务不存在') && retryCount < maxRetries) {
+                            retryCount++;
+                            console.log(`任务尚未就绪，重试 ${retryCount}/${maxRetries}`);
+                            jmStatusMessage.textContent = `任务初始化中... (${retryCount}/${maxRetries})`;
+                            return;
+                        }
+                        
+                        clearInterval(jmStatusCheckInterval);
+                        jmShowError(data.error);
+                        return;
+                    }
+                    
+                    retryCount = 0;
+                    
+                    jmProgressFill.style.width = data.progress + '%';
+                    jmProgressText.textContent = data.progress + '%';
+                    jmStatusText.textContent = data.current_step;
+                    jmStatusMessage.textContent = data.status;
+
+                    if (data.status === '处理完成') {
+                        clearInterval(jmStatusCheckInterval);
+                        jmShowResult(data);
+                    } else if (data.error) {
+                        clearInterval(jmStatusCheckInterval);
+                        jmShowError(data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('状态检查失败:', error);
+                    
+                    if (retryCount < maxRetries) {
+                        retryCount++;
+                        console.log(`网络错误，重试 ${retryCount}/${maxRetries}`);
+                        return;
+                    }
+                    
+                    clearInterval(jmStatusCheckInterval);
+                    jmShowError('状态检查失败: ' + error.message);
+                });
+            }, 2000);
+        }
+
+        // 显示JM下载结果
+        function jmShowResult(data) {
+            jmProgressContainer.style.display = 'none';
+            jmResultContainer.style.display = 'block';
+
+            if (data.download_url) {
+                jmDownloadBtnResult.href = data.download_url;
+            }
+
+            // 如果有PDF列表URL，加载PDF文件列表
+            if (data.pdf_list_url) {
+                jmLoadPdfList(data.pdf_list_url);
+            }
+        }
+
+        // 加载JM PDF文件列表
+        function jmLoadPdfList(pdfListUrl) {
+            fetch(pdfListUrl)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('加载PDF列表失败:', data.error);
+                    return;
+                }
+                if (data.pdf_files && data.pdf_files.length > 0) {
+                    jmCurrentPdfFiles = data.pdf_files;
+                    displayPdfList(data.pdf_files, jmPdfList);
+                }
+            })
+            .catch(error => {
+                console.error('加载PDF列表失败:', error);
+            });
+        }
+
+        // 显示JM PDF列表按钮事件
+        jmShowPdfListBtn.addEventListener('click', () => {
+            jmPdfListContainer.style.display = jmPdfListContainer.style.display === 'none' ? 'block' : 'none';
+        });
+
+        // 显示JM下载错误信息
+        function jmShowError(message) {
+            jmProgressContainer.style.display = 'none';
+            jmErrorMessage.style.display = 'block';
+            jmErrorMessage.textContent = message;
+        }
+
+        // 重置JM下载UI状态
+        function jmResetUI() {
+            jmProgressContainer.style.display = 'none';
+            jmErrorMessage.style.display = 'none';
+            jmResultContainer.style.display = 'none';
+            jmPdfListContainer.style.display = 'none';
+            jmProgressFill.style.width = '0%';
+            jmProgressText.textContent = '0%';
+            jmStatusText.textContent = '等待开始';
+            jmCurrentPdfFiles = [];
+
+            if (jmStatusCheckInterval) {
+                clearInterval(jmStatusCheckInterval);
+            }
+        }
+
+        // PDF预览功能
+        const pdfPreviewModal = document.getElementById('pdfPreviewModal');
+        const pdfPreviewFrame = document.getElementById('pdfPreviewFrame');
+        const pdfPreviewTitle = document.getElementById('pdfPreviewTitle');
+        const pdfPreviewDownloadBtn = document.getElementById('pdfPreviewDownloadBtn');
+        const closePreviewBtn = document.getElementById('closePreviewBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+
+        // 预览PDF
+        function previewPdf(pdfFile) {
+            pdfPreviewTitle.textContent = `预览: ${pdfFile.filename}`;
+            // 使用预览URL而不是下载URL
+            pdfPreviewFrame.src = pdfFile.preview_url || pdfFile.download_url;
+            pdfPreviewDownloadBtn.href = pdfFile.download_url;
+            pdfPreviewModal.style.display = 'block';
+        }
+
+        // 关闭预览模态框
+        function closePreviewModal() {
+            pdfPreviewModal.style.display = 'none';
+            pdfPreviewFrame.src = '';
+        }
+
+        closePreviewBtn.addEventListener('click', closePreviewModal);
+        closeModalBtn.addEventListener('click', closePreviewModal);
+
+        // 点击模态框外部关闭
+        pdfPreviewModal.addEventListener('click', (e) => {
+            if (e.target === pdfPreviewModal) {
+                closePreviewModal();
+            }
+        });
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
         // 页面加载时重置状态
-        window.addEventListener('load', resetUI);
+        window.addEventListener('load', () => {
+            resetUI();
+            jmResetUI();
+        });
     </script>
 </body>
 </html>
