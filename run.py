@@ -387,6 +387,32 @@ def is_github_actions():
     """检查是否在 GitHub Actions 环境中运行"""
     return os.getenv('GITHUB_ACTIONS') == 'true'
 
+def download_random_jm_comic():
+    """下载随机JM漫画"""
+    try:
+        # 生成随机ID
+        jm_id = str(random.randint(100000, 999999))
+        print(f"生成的随机JM ID: {jm_id}")
+        
+        # 使用现有的下载逻辑
+        return process_jm_comic(jm_id)
+    except Exception as e:
+        print(f"随机下载失败: {e}")
+        return False
+
+def batch_download_random_comics(count=5):
+    """批量下载随机漫画"""
+    success_count = 0
+    for i in range(count):
+        print(f"\n正在下载第 {i+1}/{count} 个随机漫画...")
+        if download_random_jm_comic():
+            success_count += 1
+        # 添加延迟避免请求过快
+        time.sleep(2)
+    
+    print(f"\n批量下载完成！成功: {success_count}/{count}")
+    return success_count
+
 def main():
     """主函数"""
     print("=" * 50)
@@ -450,11 +476,13 @@ def main():
         print("\n请选择模式:")
         print("1. 启动Web界面")
         print("2. 下载JM漫画并转换为PDF")
-        print("3. 清理下载文件")
-        print("4. 清理临时文件")
-        print("5. 清理temp文件夹中的所有内容")
+        print("3. 随机下载JM漫画")
+        print("4. 批量随机下载JM漫画")
+        print("5. 清理下载文件")
+        print("6. 清理临时文件")
+        print("7. 清理temp文件夹中的所有内容")
         
-        choice = input("\n请输入选择 (1-5): ").strip()
+        choice = input("\n请输入选择 (1-7): ").strip()
         
         if choice == '1':
             start_web_app()
@@ -464,13 +492,26 @@ def main():
                 process_jm_comic(jm_id)
             else:
                 print("无效的JM ID")
-            cleanup_all_temp_files()
-            cleanup_temp_files()
         elif choice == '3':
-            cleanup_all_downloads()
+            print("开始随机下载JM漫画...")
+            download_random_jm_comic()
         elif choice == '4':
-            cleanup_temp_files()
+            count = input("请输入要下载的数量 (1-10): ").strip()
+            try:
+                count = int(count)
+                if count < 1:
+                    count = 1
+                elif count > 10:
+                    count = 10
+                batch_download_random_comics(count)
+            except ValueError:
+                print("无效的数量，使用默认值 5")
+                batch_download_random_comics(5)
         elif choice == '5':
+            cleanup_all_downloads()
+        elif choice == '6':
+            cleanup_temp_files()
+        elif choice == '7':
             cleanup_all_temp_files()
         else:
             print("无效的选择")

@@ -1,0 +1,134 @@
+<!-- [file name]: logs.html -->
+<!-- [file content begin] -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日志查看 - JM漫画下载器</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+        }
+        .log-section {
+            margin-top: 30px;
+        }
+        .log-entry {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 4px solid #4facfe;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .log-error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .log-success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>JM漫画下载器 - 日志查看</h1>
+        
+        <div class="stats" id="statsContainer">
+            <!-- 统计信息将通过JavaScript加载 -->
+        </div>
+        
+        <div class="log-section">
+            <h3>最近访问日志</h3>
+            <div id="accessLogs"></div>
+        </div>
+    </div>
+
+    <script>
+        // 加载统计信息
+        fetch('/logs/stats')
+            .then(response => response.json())
+            .then(stats => {
+                const statsContainer = document.getElementById('statsContainer');
+                statsContainer.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.total_downloads}</div>
+                        <div>总下载次数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.successful_downloads}</div>
+                        <div>成功下载</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.failed_downloads}</div>
+                        <div>失败下载</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${stats.unique_ips.length}</div>
+                        <div>独立IP数</div>
+                    </div>
+                `;
+            })
+            .catch(error => {
+                console.error('加载统计信息失败:', error);
+            });
+
+        // 加载访问日志
+        fetch('/logs/access')
+            .then(response => response.json())
+            .then(data => {
+                const logsContainer = document.getElementById('accessLogs');
+                if (data.logs && data.logs.length > 0) {
+                    data.logs.forEach(log => {
+                        const logEntry = document.createElement('div');
+                        logEntry.className = 'log-entry';
+                        
+                        if (log.includes('Status: error')) {
+                            logEntry.classList.add('log-error');
+                        } else if (log.includes('Status: completed')) {
+                            logEntry.classList.add('log-success');
+                        }
+                        
+                        logEntry.textContent = log.trim();
+                        logsContainer.appendChild(logEntry);
+                    });
+                } else {
+                    logsContainer.innerHTML = '<p>暂无日志记录</p>';
+                }
+            })
+            .catch(error => {
+                console.error('加载日志失败:', error);
+            });
+    </script>
+</body>
+</html>
+<!-- [file content end] -->

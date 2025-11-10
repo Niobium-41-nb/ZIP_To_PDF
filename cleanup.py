@@ -69,6 +69,51 @@ def show_file_stats():
         else:
             print(f"{folder_name}: 目录不存在")
 
+def clean_files(file_path, hours_old=None, task_id=None):
+    """清理指定文件夹中的内容
+    
+    参数:
+        file_path: 要清理的文件夹路径
+        hours_old: 可选，只清理指定小时数之前的文件，如果为None则清理所有文件
+        task_id: 可选，如果指定则只清理与该任务相关的文件
+    """
+    print(f"开始清理文件夹: {file_path}...")
+    
+    # 检查文件夹是否存在
+    if not os.path.exists(file_path):
+        print(f"警告: 文件夹 {file_path} 不存在")
+        return
+    
+    if not os.path.isdir(file_path):
+        print(f"警告: {file_path} 不是一个文件夹")
+        return
+    
+    # 根据参数选择清理方式
+    if task_id:
+        # 清理与指定任务相关的文件
+        print(f"清理与任务 {task_id} 相关的文件...")
+        config_obj = config['default']
+        
+        # 遍历文件夹中的所有文件和子目录
+        for item in os.listdir(file_path):
+            item_full_path = os.path.join(file_path, item)
+            
+            # 如果项目名称包含task_id，则清理它
+            if str(task_id) in str(item):
+                FileUtils.safe_remove(item_full_path)
+    elif hours_old is not None:
+        # 按时间清理旧文件
+        print(f"清理 {hours_old} 小时前的文件...")
+        FileUtils.cleanup_old_files(file_path, hours_old)
+    else:
+        # 清理所有文件
+        print("清理文件夹中的所有文件...")
+        for item in os.listdir(file_path):
+            item_full_path = os.path.join(file_path, item)
+            FileUtils.safe_remove(item_full_path)
+    
+    print(f"文件夹 {file_path} 清理完成！")
+
 if __name__ == '__main__':
     print("压缩包转PDF工具 - 文件清理脚本")
     print("=" * 50)

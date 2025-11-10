@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>压缩包转PDF工具 - JM漫画下载</title>
+    <title>压缩包转PDF工具 - 漫画下载</title>
     <style>
+        /* 基础样式 */
         * {
             margin: 0;
             padding: 0;
@@ -178,47 +179,212 @@
             padding: 12px 25px;
         }
 
+        /* 优化进度条样式 */
         .progress-container {
             margin-top: 25px;
             display: none;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
         }
 
-        .progress-bar {
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .progress-title {
+            font-weight: 600;
+            color: #495057;
+            font-size: 1.1em;
+        }
+
+        .progress-percentage {
+            font-weight: bold;
+            color: #4facfe;
+            font-size: 1.2em;
+        }
+
+        .progress-bar-container {
             width: 100%;
-            height: 20px;
+            height: 24px;
             background: #e9ecef;
-            border-radius: 10px;
+            border-radius: 12px;
             overflow: hidden;
             margin-bottom: 10px;
+            position: relative;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            border-radius: 10px;
-            transition: width 0.3s ease;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 50%, #667eea 100%);
+            border-radius: 12px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
             width: 0%;
         }
 
-        .progress-text {
+        /* 进度条动画效果 */
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.4),
+                transparent
+            );
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+
+        .progress-stats {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             font-size: 0.9em;
             color: #6c757d;
         }
 
-        .status-message {
-            background: #e7f3ff;
-            border-left: 4px solid #4facfe;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 5px;
-            display: none;
+        .progress-step {
+            font-weight: 500;
+            color: #495057;
         }
 
-        .result-container {
-            margin-top: 25px;
-            display: none;
+        .progress-time {
+            font-style: italic;
+        }
+
+        /* 步骤指示器 */
+        .steps-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .steps-container::before {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e9ecef;
+            z-index: 1;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            flex: 1;
+        }
+
+        .step-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #6c757d;
+            margin-bottom: 8px;
+            border: 3px solid white;
+            transition: all 0.3s ease;
+        }
+
+        .step.active .step-circle {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
+        }
+
+        .step.completed .step-circle {
+            background: #28a745;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 0.8em;
+            color: #6c757d;
+            text-align: center;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .step.active .step-label {
+            color: #4facfe;
+            font-weight: 600;
+        }
+
+        .step.completed .step-label {
+            color: #28a745;
+        }
+
+        /* 详细状态信息 */
+        .status-details {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            border: 1px solid #e9ecef;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+        .status-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-label {
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .status-value {
+            color: #495057;
+            font-weight: 600;
+        }
+
+        .status-value.success {
+            color: #28a745;
+        }
+
+        .status-value.error {
+            color: #dc3545;
+        }
+
+        .status-value.processing {
+            color: #4facfe;
         }
 
         .error-message {
@@ -228,6 +394,11 @@
             padding: 15px;
             margin: 20px 0;
             border-radius: 5px;
+            display: none;
+        }
+
+        .result-container {
+            margin-top: 25px;
             display: none;
         }
 
@@ -263,14 +434,14 @@
             font-size: 0.9em;
         }
 
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #4facfe;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        .instructions {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-size: 0.9em;
         }
 
         .pdf-list-container {
@@ -419,21 +590,7 @@
             border-top: 1px solid #e9ecef;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .instructions {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            color: #856404;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 5px;
-            font-size: 0.9em;
-        }
-
+        /* 响应式调整 */
         @media (max-width: 768px) {
             .container {
                 margin: 10px;
@@ -470,6 +627,27 @@
                 border-radius: 25px;
             }
 
+            .progress-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .steps-container {
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .step {
+                flex: 0 0 calc(50% - 10px);
+            }
+
+            .status-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
             .pdf-item {
                 flex-direction: column;
                 align-items: flex-start;
@@ -494,13 +672,13 @@
     <div class="container">
         <div class="header">
             <h1>压缩包转PDF工具</h1>
-            <p>支持压缩包转PDF和JM漫画下载</p>
+            <p>支持压缩包转PDF和漫画下载</p>
         </div>
 
         <div class="content">
             <div class="tabs">
                 <div class="tab active" data-tab="upload">压缩包转PDF</div>
-                <div class="tab" data-tab="jm">JM漫画下载</div>
+                <div class="tab" data-tab="jm">漫画下载</div>
             </div>
 
             <!-- 压缩包转PDF标签内容 -->
@@ -513,21 +691,71 @@
                     <button class="btn" onclick="document.getElementById('fileInput').click()">选择文件</button>
                 </div>
 
+                <!-- 优化后的进度条 -->
                 <div class="progress-container" id="progressContainer">
-                    <div class="progress-bar">
+                    <div class="progress-header">
+                        <div class="progress-title">处理进度</div>
+                        <div class="progress-percentage" id="progressText">0%</div>
+                    </div>
+
+                    <div class="progress-bar-container">
                         <div class="progress-fill" id="progressFill"></div>
                     </div>
-                    <div class="progress-text">
-                        <span id="progressText">0%</span>
-                        <span id="statusText">等待开始</span>
+
+                    <div class="progress-stats">
+                        <div class="progress-step" id="statusText">等待开始</div>
+                        <div class="progress-time" id="progressTime">--</div>
                     </div>
-                    <div class="status-message" id="statusMessage"></div>
+
+                    <!-- 步骤指示器 -->
+                    <div class="steps-container" id="stepsContainer">
+                        <div class="step" id="step1">
+                            <div class="step-circle">1</div>
+                            <div class="step-label">上传</div>
+                        </div>
+                        <div class="step" id="step2">
+                            <div class="step-circle">2</div>
+                            <div class="step-label">解压</div>
+                        </div>
+                        <div class="step" id="step3">
+                            <div class="step-circle">3</div>
+                            <div class="step-label">图片处理</div>
+                        </div>
+                        <div class="step" id="step4">
+                            <div class="step-circle">4</div>
+                            <div class="step-label">PDF生成</div>
+                        </div>
+                        <div class="step" id="step5">
+                            <div class="step-circle">5</div>
+                            <div class="step-label">完成</div>
+                        </div>
+                    </div>
+
+                    <!-- 详细状态信息 -->
+                    <div class="status-details">
+                        <div class="status-item">
+                            <span class="status-label">当前状态:</span>
+                            <span class="status-value processing" id="detailStatus">等待开始</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">开始时间:</span>
+                            <span class="status-value" id="startTime">--</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">已用时间:</span>
+                            <span class="status-value" id="elapsedTime">--</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">文件数量:</span>
+                            <span class="status-value" id="fileCount">--</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="error-message" id="errorMessage"></div>
 
                 <div class="result-container" id="resultContainer">
-                    <div style="text-align: center;"> 
+                    <div style="text-align: center;">
                         <h3 style="color: #28a745; margin-bottom: 20px;">处理完成！</h3>
                         <a href="#" class="btn btn-success" id="downloadBtn">下载PDF文件包</a>
                         <button class="btn btn-secondary" id="showPdfListBtn" style="margin-left: 10px;">查看PDF文件列表</button>
@@ -561,33 +789,95 @@
                 </div>
             </div>
 
-            <!-- JM漫画下载标签内容 -->
+            <!-- 漫画下载标签内容 -->
             <div class="tab-content" id="jm-tab">
                 <div class="instructions">
-                    <p><strong>使用说明：</strong> 输入JM漫画ID，系统将自动下载漫画并转换为PDF格式。</p>
-                    <p>例如：JM漫画网址为 https://jmcomic.com/422866/，则ID为 422866</p>
+                    <p><strong>使用说明：</strong> 输入漫画ID，系统将自动下载漫画并转换为PDF格式。</p>
+                    <p>例如：漫画网址为 https://jmcomic.com/422866/，则ID为 422866</p>
                 </div>
 
                 <div class="jm-input-container">
-                    <input type="text" class="jm-input" id="jmIdInput" placeholder="请输入JM漫画ID (例如: 422866)">
+                    <input type="text" class="jm-input" id="jmIdInput" placeholder="请输入漫画ID (例如: 422866)">
                     <button class="btn jm-btn" id="jmDownloadBtn">下载并转换</button>
                 </div>
-
+                <div style="text-align: center; margin: 20px 0;">
+                    <button class="btn" id="randomDownloadBtn" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);">
+                        🎲 随机下载漫画
+                    </button>
+                    <button class="btn" id="batchDownloadBtn" style="background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%); margin-left: 10px;">
+                        📚 批量随机下载 (5个)
+                    </button>
+                </div>
+                <div id="batchControl" style="display: none; text-align: center; margin: 15px 0;">
+                    <label for="batchCount" style="margin-right: 10px;">下载数量:</label>
+                    <input type="number" id="batchCount" min="1" max="10" value="5" style="padding: 8px; border: 1px solid #ced4da; border-radius: 5px; width: 80px;">
+                    <button class="btn" id="startBatchDownload" style="margin-left: 10px;">开始批量下载</button>
+                </div>
+                <!-- JM下载优化进度条 -->
                 <div class="progress-container" id="jmProgressContainer">
-                    <div class="progress-bar">
+                    <div class="progress-header">
+                        <div class="progress-title">下载进度</div>
+                        <div class="progress-percentage" id="jmProgressText">0%</div>
+                    </div>
+
+                    <div class="progress-bar-container">
                         <div class="progress-fill" id="jmProgressFill"></div>
                     </div>
-                    <div class="progress-text">
-                        <span id="jmProgressText">0%</span>
-                        <span id="jmStatusText">等待开始</span>
+
+                    <div class="progress-stats">
+                        <div class="progress-step" id="jmStatusText">等待开始</div>
+                        <div class="progress-time" id="jmProgressTime">--</div>
                     </div>
-                    <div class="status-message" id="jmStatusMessage"></div>
+
+                    <!-- JM下载步骤指示器 -->
+                    <div class="steps-container" id="jmStepsContainer">
+                        <div class="step" id="jmStep1">
+                            <div class="step-circle">1</div>
+                            <div class="step-label">开始下载</div>
+                        </div>
+                        <div class="step" id="jmStep2">
+                            <div class="step-circle">2</div>
+                            <div class="step-label">下载中</div>
+                        </div>
+                        <div class="step" id="jmStep3">
+                            <div class="step-circle">3</div>
+                            <div class="step-label">处理中</div>
+                        </div>
+                        <div class="step" id="jmStep4">
+                            <div class="step-circle">4</div>
+                            <div class="step-label">生成PDF</div>
+                        </div>
+                        <div class="step" id="jmStep5">
+                            <div class="step-circle">5</div>
+                            <div class="step-label">完成</div>
+                        </div>
+                    </div>
+
+                    <!-- 详细状态信息 -->
+                    <div class="status-details">
+                        <div class="status-item">
+                            <span class="status-label">当前状态:</span>
+                            <span class="status-value processing" id="jmDetailStatus">等待开始</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">开始时间:</span>
+                            <span class="status-value" id="jmStartTime">--</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">已用时间:</span>
+                            <span class="status-value" id="jmElapsedTime">--</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">JM ID:</span>
+                            <span class="status-value" id="jmIdDisplay">--</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="error-message" id="jmErrorMessage"></div>
 
                 <div class="result-container" id="jmResultContainer">
-                    <div style="text-align: center;"> 
+                    <div style="text-align: center;">
                         <h3 style="color: #28a745; margin-bottom: 20px;">下载完成！</h3>
                         <a href="#" class="btn btn-success" id="jmDownloadBtnResult">下载PDF文件包</a>
                         <button class="btn btn-secondary" id="jmShowPdfListBtn" style="margin-left: 10px;">查看PDF文件列表</button>
@@ -619,6 +909,152 @@
     </div>
 
     <script>
+        // 进度条管理类
+        class ProgressManager {
+            constructor(prefix = '') {
+                this.prefix = prefix;
+                this.startTime = null;
+                this.timerInterval = null;
+            }
+
+            start() {
+                this.startTime = new Date();
+                this.updateStartTime();
+                this.startTimer();
+            }
+
+            updateStartTime() {
+                const startTimeElement = document.getElementById(`${this.prefix}StartTime`);
+                if (startTimeElement) {
+                    startTimeElement.textContent = this.startTime.toLocaleTimeString();
+                }
+            }
+
+            startTimer() {
+                this.timerInterval = setInterval(() => {
+                    this.updateElapsedTime();
+                }, 1000);
+            }
+
+            updateElapsedTime() {
+                const elapsedTimeElement = document.getElementById(`${this.prefix}ElapsedTime`);
+                if (elapsedTimeElement && this.startTime) {
+                    const now = new Date();
+                    const elapsed = Math.floor((now - this.startTime) / 1000);
+                    const minutes = Math.floor(elapsed / 60);
+                    const seconds = elapsed % 60;
+                    elapsedTimeElement.textContent = `${minutes}分${seconds}秒`;
+                }
+            }
+
+            stop() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+            }
+
+            updateProgress(progress, status, step) {
+                // 更新进度条
+                const progressFill = document.getElementById(`${this.prefix}ProgressFill`);
+                const progressText = document.getElementById(`${this.prefix}ProgressText`);
+                const statusText = document.getElementById(`${this.prefix}StatusText`);
+                const detailStatus = document.getElementById(`${this.prefix}DetailStatus`);
+
+                if (progressFill) {
+                    progressFill.style.width = progress + '%';
+                }
+                if (progressText) {
+                    progressText.textContent = progress + '%';
+                }
+                if (statusText) {
+                    statusText.textContent = status;
+                }
+                if (detailStatus) {
+                    detailStatus.textContent = status;
+                    // 根据状态更新颜色
+                    detailStatus.className = 'status-value ' +
+                        (progress === 100 ? 'success' :
+                         status.includes('错误') || status.includes('失败') ? 'error' : 'processing');
+                }
+
+                // 更新步骤指示器
+                this.updateSteps(progress, step);
+            }
+
+            updateSteps(progress, currentStep) {
+                const steps = [1, 2, 3, 4, 5];
+
+                steps.forEach(stepNum => {
+                    const stepElement = document.getElementById(`${this.prefix}Step${stepNum}`);
+                    if (stepElement) {
+                        const stepProgress = (stepNum - 1) * 25; // 每个步骤25%
+
+                        if (progress >= 100) {
+                            // 所有步骤完成
+                            stepElement.classList.add('completed');
+                            stepElement.classList.remove('active');
+                        } else if (progress >= stepProgress + 25) {
+                            // 步骤已完成
+                            stepElement.classList.add('completed');
+                            stepElement.classList.remove('active');
+                        } else if (progress >= stepProgress) {
+                            // 当前活跃步骤
+                            stepElement.classList.add('active');
+                            stepElement.classList.remove('completed');
+                        } else {
+                            // 未开始步骤
+                            stepElement.classList.remove('active', 'completed');
+                        }
+                    }
+                });
+            }
+
+            updateFileCount(count) {
+                const fileCountElement = document.getElementById(`${this.prefix}FileCount`);
+                if (fileCountElement && count !== undefined) {
+                    fileCountElement.textContent = count;
+                }
+            }
+
+            updateJmId(jmId) {
+                const jmIdElement = document.getElementById(`${this.prefix}JmIdDisplay`);
+                if (jmIdElement && jmId) {
+                    jmIdElement.textContent = jmId;
+                }
+            }
+
+            reset() {
+                this.stop();
+                this.startTime = null;
+
+                // 重置所有UI元素
+                this.updateProgress(0, '等待开始', '');
+                this.updateFileCount('--');
+
+                const startTimeElement = document.getElementById(`${this.prefix}StartTime`);
+                const elapsedTimeElement = document.getElementById(`${this.prefix}ElapsedTime`);
+                const jmIdElement = document.getElementById(`${this.prefix}JmIdDisplay`);
+
+                if (startTimeElement) startTimeElement.textContent = '--';
+                if (elapsedTimeElement) elapsedTimeElement.textContent = '--';
+                if (jmIdElement) jmIdElement.textContent = '--';
+
+                // 重置步骤指示器
+                const steps = [1, 2, 3, 4, 5];
+                steps.forEach(stepNum => {
+                    const stepElement = document.getElementById(`${this.prefix}Step${stepNum}`);
+                    if (stepElement) {
+                        stepElement.classList.remove('active', 'completed');
+                    }
+                });
+            }
+        }
+
+        // 初始化进度管理器
+        const uploadProgressManager = new ProgressManager('');
+        const jmProgressManager = new ProgressManager('jm');
+
         // 标签切换功能
         document.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
@@ -630,7 +1066,7 @@
                 document.querySelectorAll('.tab-content').forEach(content => {
                     content.classList.remove('active');
                 });
-                
+
                 // 设置当前标签为活动状态
                 tab.classList.add('active');
                 // 显示对应的标签内容
@@ -643,10 +1079,6 @@
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
         const progressContainer = document.getElementById('progressContainer');
-        const progressFill = document.getElementById('progressFill');
-        const progressText = document.getElementById('progressText');
-        const statusText = document.getElementById('statusText');
-        const statusMessage = document.getElementById('statusMessage');
         const errorMessage = document.getElementById('errorMessage');
         const resultContainer = document.getElementById('resultContainer');
         const downloadBtn = document.getElementById('downloadBtn');
@@ -689,12 +1121,12 @@
         function handleFile(file) {
             // 重置状态
             resetUI();
-            
+
             // 验证文件类型
             const allowedExtensions = ['zip', 'tar', 'gz', 'bz2', 'rar', '7z', 'tar.gz', 'tar.bz2'];
             const fileExtension = file.name.split('.').pop().toLowerCase();
             const doubleExtension = file.name.split('.').slice(-2).join('.').toLowerCase();
-            
+
             if (!allowedExtensions.includes(fileExtension) && !allowedExtensions.includes(doubleExtension)) {
                 showError('不支持的文件格式。请上传ZIP、TAR、RAR或7Z格式的文件。');
                 return;
@@ -708,8 +1140,9 @@
 
             // 显示进度容器
             progressContainer.style.display = 'block';
-            statusMessage.style.display = 'block';
-            statusMessage.textContent = '正在上传文件...';
+
+            // 初始化进度条
+            uploadProgressManager.start();
 
             // 创建FormData并上传
             const formData = new FormData();
@@ -723,17 +1156,18 @@
             .then(data => {
                 if (data.error) {
                     showError(data.error);
+                    uploadProgressManager.stop();
                     return;
                 }
 
                 currentTaskId = data.task_id;
-                statusMessage.textContent = '文件上传成功，开始处理...';
 
                 // 开始轮询状态
                 startStatusPolling();
             })
             .catch(error => {
                 showError('上传失败: ' + error.message);
+                uploadProgressManager.stop();
             });
         }
 
@@ -746,21 +1180,26 @@
                     if (data.error) {
                         clearInterval(statusCheckInterval);
                         showError(data.error);
+                        uploadProgressManager.stop();
                         return;
                     }
-                    
-                    // 更新进度
-                    progressFill.style.width = data.progress + '%';
-                    progressText.textContent = data.progress + '%';
-                    statusText.textContent = data.current_step;
-                    statusMessage.textContent = data.status;
+
+                    // 更新进度条
+                    uploadProgressManager.updateProgress(data.progress, data.status, data.current_step);
+
+                    // 如果有文件数量信息，更新显示
+                    if (data.file_count) {
+                        uploadProgressManager.updateFileCount(data.file_count);
+                    }
 
                     // 检查是否完成
                     if (data.status === '处理完成') {
                         clearInterval(statusCheckInterval);
+                        uploadProgressManager.stop();
                         showResult(data);
                     } else if (data.error) {
                         clearInterval(statusCheckInterval);
+                        uploadProgressManager.stop();
                         showError(data.error);
                     }
                 })
@@ -810,41 +1249,41 @@
             pdfFiles.forEach(pdfFile => {
                 const pdfItem = document.createElement('div');
                 pdfItem.className = 'pdf-item';
-                
+
                 const pdfInfo = document.createElement('div');
                 pdfInfo.className = 'pdf-info';
-                
+
                 const pdfName = document.createElement('div');
                 pdfName.className = 'pdf-name';
                 pdfName.textContent = pdfFile.filename;
-                
+
                 const pdfSize = document.createElement('div');
                 pdfSize.className = 'pdf-size';
                 pdfSize.textContent = formatFileSize(pdfFile.size);
-                
+
                 pdfInfo.appendChild(pdfName);
                 pdfInfo.appendChild(pdfSize);
-                
+
                 const pdfActions = document.createElement('div');
                 pdfActions.className = 'pdf-actions';
-                
+
                 const previewBtn = document.createElement('button');
                 previewBtn.className = 'pdf-preview-btn';
                 previewBtn.textContent = '预览';
                 previewBtn.onclick = () => previewPdf(pdfFile);
-                
+
                 const downloadBtn = document.createElement('a');
                 downloadBtn.className = 'pdf-download-btn';
                 downloadBtn.href = pdfFile.download_url;
                 downloadBtn.textContent = '下载';
                 downloadBtn.target = '_blank';
-                
+
                 pdfActions.appendChild(previewBtn);
                 pdfActions.appendChild(downloadBtn);
-                
+
                 pdfItem.appendChild(pdfInfo);
                 pdfItem.appendChild(pdfActions);
-                
+
                 container.appendChild(pdfItem);
             });
         }
@@ -867,24 +1306,19 @@
             errorMessage.style.display = 'none';
             resultContainer.style.display = 'none';
             pdfListContainer.style.display = 'none';
-            progressFill.style.width = '0%';
-            progressText.textContent = '0%';
-            statusText.textContent = '等待开始';
             currentPdfFiles = [];
 
             if (statusCheckInterval) {
                 clearInterval(statusCheckInterval);
             }
+
+            uploadProgressManager.reset();
         }
 
         // JM漫画下载功能
         const jmIdInput = document.getElementById('jmIdInput');
         const jmDownloadBtn = document.getElementById('jmDownloadBtn');
         const jmProgressContainer = document.getElementById('jmProgressContainer');
-        const jmProgressFill = document.getElementById('jmProgressFill');
-        const jmProgressText = document.getElementById('jmProgressText');
-        const jmStatusText = document.getElementById('jmStatusText');
-        const jmStatusMessage = document.getElementById('jmStatusMessage');
         const jmErrorMessage = document.getElementById('jmErrorMessage');
         const jmResultContainer = document.getElementById('jmResultContainer');
         const jmDownloadBtnResult = document.getElementById('jmDownloadBtnResult');
@@ -899,17 +1333,17 @@
         // JM下载按钮点击事件
         jmDownloadBtn.addEventListener('click', () => {
             const jmId = jmIdInput.value.trim();
-            
+
             if (!jmId) {
-                jmShowError('请输入JM漫画ID');
+                jmShowError('请输入漫画ID');
                 return;
             }
-            
+
             if (!/^\d+$/.test(jmId)) {
-                jmShowError('JM漫画ID必须是数字');
+                jmShowError('漫画ID必须是数字');
                 return;
             }
-            
+
             jmResetUI();
             jmStartDownload(jmId);
         });
@@ -917,8 +1351,10 @@
         // 开始JM下载
         function jmStartDownload(jmId) {
             jmProgressContainer.style.display = 'block';
-            jmStatusMessage.style.display = 'block';
-            jmStatusMessage.textContent = '开始下载JM漫画...';
+
+            // 初始化JM进度条
+            jmProgressManager.start();
+            jmProgressManager.updateJmId(jmId);
 
             // 发送下载请求
             fetch('/download_jm', {
@@ -932,77 +1368,65 @@
             .then(data => {
                 if (data.error) {
                     jmShowError(data.error);
+                    jmProgressManager.stop();
                     return;
                 }
 
                 jmCurrentTaskId = data.task_id;
-                jmStatusMessage.textContent = '漫画下载成功，开始处理...';
 
                 // 开始轮询状态
                 jmStartStatusPolling();
             })
             .catch(error => {
                 jmShowError('下载失败: ' + error.message);
+                jmProgressManager.stop();
             });
         }
 
         // 开始轮询JM处理状态
         function jmStartStatusPolling() {
             let retryCount = 0;
-            const maxRetries = 30;
-            
+            const maxRetries = 60;
+
             jmStatusCheckInterval = setInterval(() => {
                 fetch(`/status/${jmCurrentTaskId}`)
                 .then(response => {
                     if (!response.ok) {
-                        return response.json().then(errorData => {
-                            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-                        });
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     return response.json();
                 })
                 .then(data => {
-                    if (data.error) {
-                        if (data.error.includes('任务不存在') && retryCount < maxRetries) {
-                            retryCount++;
-                            console.log(`任务尚未就绪，重试 ${retryCount}/${maxRetries}`);
-                            jmStatusMessage.textContent = `任务初始化中... (${retryCount}/${maxRetries})`;
-                            return;
-                        }
-                        
-                        clearInterval(jmStatusCheckInterval);
-                        jmShowError(data.error);
-                        return;
-                    }
-                    
-                    retryCount = 0;
-                    
-                    jmProgressFill.style.width = data.progress + '%';
-                    jmProgressText.textContent = data.progress + '%';
-                    jmStatusText.textContent = data.current_step;
-                    jmStatusMessage.textContent = data.status;
+                    retryCount = 0; // 重置重试计数
 
+                    // 更新进度条
+                    jmProgressManager.updateProgress(data.progress, data.status, data.current_step);
+
+                    // 检查是否完成
                     if (data.status === '处理完成') {
                         clearInterval(jmStatusCheckInterval);
+                        jmProgressManager.stop();
                         jmShowResult(data);
                     } else if (data.error) {
                         clearInterval(jmStatusCheckInterval);
+                        jmProgressManager.stop();
                         jmShowError(data.error);
                     }
                 })
                 .catch(error => {
                     console.error('状态检查失败:', error);
-                    
+
                     if (retryCount < maxRetries) {
                         retryCount++;
-                        console.log(`网络错误，重试 ${retryCount}/${maxRetries}`);
+                        console.log(`状态检查失败，重试 ${retryCount}/${maxRetries}`);
                         return;
                     }
-                    
+
                     clearInterval(jmStatusCheckInterval);
+                    jmProgressManager.stop();
                     jmShowError('状态检查失败: ' + error.message);
                 });
-            }, 2000);
+            }, 2000); // 每2秒检查一次
         }
 
         // 显示JM下载结果
@@ -1057,14 +1481,13 @@
             jmErrorMessage.style.display = 'none';
             jmResultContainer.style.display = 'none';
             jmPdfListContainer.style.display = 'none';
-            jmProgressFill.style.width = '0%';
-            jmProgressText.textContent = '0%';
-            jmStatusText.textContent = '等待开始';
             jmCurrentPdfFiles = [];
 
             if (jmStatusCheckInterval) {
                 clearInterval(jmStatusCheckInterval);
             }
+
+            jmProgressManager.reset();
         }
 
         // PDF预览功能
@@ -1109,6 +1532,109 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
+        // 在 index.html 的 JavaScript 部分添加以下代码
+
+        // 随机下载功能
+        const randomDownloadBtn = document.getElementById('randomDownloadBtn');
+        const batchDownloadBtn = document.getElementById('batchDownloadBtn');
+        const batchControl = document.getElementById('batchControl');
+        const batchCount = document.getElementById('batchCount');
+        const startBatchDownload = document.getElementById('startBatchDownload');
+
+        // 随机下载按钮事件
+        randomDownloadBtn.addEventListener('click', () => {
+            jmResetUI();
+            jmStartRandomDownload();
+        });
+
+        // 批量下载按钮事件
+        batchDownloadBtn.addEventListener('click', () => {
+            batchControl.style.display = 'block';
+        });
+
+        // 开始批量下载事件
+        startBatchDownload.addEventListener('click', () => {
+            const count = parseInt(batchCount.value) || 5;
+            if (count < 1) count = 1;
+            if (count > 10) count = 10;
+            
+            jmResetUI();
+            jmStartBatchDownload(count);
+        });
+
+        // 开始随机下载
+        function jmStartRandomDownload() {
+            jmProgressContainer.style.display = 'block';
+            
+            // 初始化JM进度条
+            jmProgressManager.start();
+            jmProgressManager.updateJmId('随机生成中...');
+
+            // 发送随机下载请求
+            fetch('/download_random_jm', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    jmShowError(data.error);
+                    jmProgressManager.stop();
+                    return;
+                }
+
+                jmCurrentTaskId = data.task_id;
+                jmProgressManager.updateJmId(data.jm_id);
+
+                // 开始轮询状态
+                jmStartStatusPolling();
+            })
+            .catch(error => {
+                jmShowError('随机下载失败: ' + error.message);
+                jmProgressManager.stop();
+            });
+        }
+
+        // 开始批量下载
+        function jmStartBatchDownload(count) {
+            jmProgressContainer.style.display = 'block';
+            
+            // 初始化JM进度条
+            jmProgressManager.start();
+            jmProgressManager.updateJmId(`批量下载 ${count} 个`);
+
+            // 发送批量下载请求
+            fetch('/batch_download_jm', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ count: count })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    jmShowError(data.error);
+                    jmProgressManager.stop();
+                    return;
+                }
+
+                // 对于批量下载，我们只跟踪第一个任务
+                if (data.task_ids && data.task_ids.length > 0) {
+                    jmCurrentTaskId = data.task_ids[0];
+                    jmProgressManager.updateJmId(`批量任务: ${data.jm_ids.join(', ')}`);
+                    
+                    // 开始轮询状态
+                    jmStartStatusPolling();
+                }
+            })
+            .catch(error => {
+                jmShowError('批量下载失败: ' + error.message);
+                jmProgressManager.stop();
+            });
+        }
         // 页面加载时重置状态
         window.addEventListener('load', () => {
             resetUI();
