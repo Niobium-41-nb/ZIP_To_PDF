@@ -15,6 +15,7 @@ import shutil
 import re
 from pathlib import Path
 from utils.file_utils import FileUtils
+import random
 
 def check_dependencies():
     """检查必要的依赖包"""
@@ -387,6 +388,15 @@ def is_github_actions():
     """检查是否在 GitHub Actions 环境中运行"""
     return os.getenv('GITHUB_ACTIONS') == 'true'
 
+def generate_random_six_digit():
+    """生成随机的六位数整数
+    
+    返回:
+        int: 一个介于100000到999999之间的随机整数
+    """
+    return random.randint(100000, 999999)
+
+
 def main():
     """主函数"""
     print("=" * 50)
@@ -453,8 +463,9 @@ def main():
         print("3. 清理下载文件")
         print("4. 清理临时文件")
         print("5. 清理temp文件夹中的所有内容")
+        print("6. 下载随机JM漫画并转换为PDF")
         
-        choice = input("\n请输入选择 (1-5): ").strip()
+        choice = input("\n请输入选择 (1-6): ").strip()
         
         if choice == '1':
             start_web_app()
@@ -472,6 +483,15 @@ def main():
             cleanup_temp_files()
         elif choice == '5':
             cleanup_all_temp_files()
+        elif choice == '6':
+            jm_id = generate_random_six_digit()
+            jm_id = str(jm_id)
+            if jm_id and jm_id.isdigit():
+                process_jm_comic(jm_id)
+            else:
+                print("无效的JM ID")
+            cleanup_all_temp_files()
+            cleanup_temp_files()
         else:
             print("无效的选择")
 
