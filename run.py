@@ -484,14 +484,16 @@ def main():
         elif choice == '5':
             cleanup_all_temp_files()
         elif choice == '6':
-            jm_id = generate_random_six_digit()
-            jm_id = str(jm_id)
-            if jm_id and jm_id.isdigit():
-                process_jm_comic(jm_id)
-            else:
-                print("无效的JM ID")
-            cleanup_all_temp_files()
-            cleanup_temp_files()
+            while True:
+                jm_id = generate_random_six_digit()
+                jm_id = str(jm_id)
+                if jm_id and jm_id.isdigit():
+                    process_jm_comic(jm_id)
+                    break
+                else:
+                    print("无效的JM ID")
+                cleanup_all_temp_files()
+                cleanup_temp_files()
         else:
             print("无效的选择")
 
