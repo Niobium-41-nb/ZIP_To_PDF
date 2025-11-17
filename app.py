@@ -705,6 +705,7 @@ def batch_download_jm_comic():
         
         return jsonify({'error': f'批量随机下载失败: {str(e)}'}), 500
 
+
 if __name__ == '__main__':
     cleanup.clean_files("download")
     cleanup.clean_files("outputs")
@@ -713,11 +714,16 @@ if __name__ == '__main__':
 
     # 创建必要的目录
     FileUtils.create_directories()
-    
+
     # 初始化日志系统
     jm_logger.setup_logging()
     jm_logger.log_system_event('system_start', 'JM漫画下载服务启动')
-    
-    # 启动应用
-    app.run(debug=True, host='0.0.0.0', port=5000)
+
+    # 启动应用 - 关键修改在这里
+    app.run(
+        debug=True,
+        host='0.0.0.0',  # 允许所有网络接口访问
+        port=5000,  # 端口号
+        threaded=True  # 启用多线程处理并发请求
+    )
 # [file content end]
