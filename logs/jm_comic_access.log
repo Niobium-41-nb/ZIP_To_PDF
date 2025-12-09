@@ -99,3 +99,17 @@
 2025-11-09 22:43:56,439 - IP: 172.20.10.1 - JM_ID: 486483 - Status: started - UA: Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.7.2 Mobile/15E148 Safari/604.1
 2025-11-09 22:45:47,536 - IP: 172.20.10.1 - JM_ID: 486483 - Status: completed - Size: 174.41 MB - PDFs: 1
 2025-11-09 22:51:59,247 - IP: 172.20.10.1 - JM_ID: 352872 - Status: completed - Size: 402.15 MB - PDFs: 1
+2025-12-09 22:26:30,098 - IP: 183.94.107.159 - JM_ID: 350324 - Status: started - UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2025-12-09 22:32:44,931 - IP: 183.94.107.159 - JM_ID: 350324 - Status: completed - Size: 472.81 MB - PDFs: 1
+2025-12-09 22:34:14,305 - IP: 220.249.99.172 - JM_ID: 422866 - Status: started - UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2025-12-09 22:34:28,846 - IP: 220.249.99.172 - JM_ID: 422866 - Status: completed - Size: 5.46 MB - PDFs: 1
+2025-12-09 22:35:21,378 - IP: 183.94.107.159 - JM_ID: 350234 - Status: started - UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2025-12-09 22:36:03,161 - IP: 183.94.107.159 - JM_ID: 350234 - Status: completed - Size: 33.12 MB - PDFs: 1
+2025-12-09 22:36:12,658 - IP: 111.181.114.210 - JM_ID: 426668 - Status: started - UA: Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.7.2 Mobile/15E148 Safari/604.1
+2025-12-09 22:36:14,651 - IP: 111.181.114.210 - JM_ID: 426668 - Status: error - Error: 漫画下载失败
+2025-12-09 22:36:27,196 - IP: 111.181.114.210 - JM_ID: 422866 - Status: started - UA: Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.7.2 Mobile/15E148 Safari/604.1
+2025-12-09 22:36:38,323 - IP: 111.181.114.210 - JM_ID: 422866 - Status: completed - Size: 5.46 MB - PDFs: 1
+2025-12-09 22:40:15,510 - IP: 223.75.64.89 - JM_ID: 527619 - Status: random_started - UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0
+2025-12-09 22:40:18,563 - IP: 223.75.64.89 - JM_ID: 527619 - Status: error - Error: 漫画下载失败
+2025-12-09 22:40:23,019 - IP: 223.75.64.89 - JM_ID: 649849 - Status: random_started - UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0
+2025-12-09 22:42:17,556 - IP: 223.75.64.89 - JM_ID: 649849 - Status: completed - Size: 42.87 MB - PDFs: 1

@@ -723,7 +723,8 @@ if __name__ == '__main__':
     app.run(
         debug=True,
         host='0.0.0.0',  # 允许所有网络接口访问
-        port=5000,  # 端口号
-        threaded=True  # 启用多线程处理并发请求
+        port=8443,  # 端口号
+        threaded=True,  # 启用多线程处理并发请求
+        ssl_context=('cert.pem', 'key.pem')  # 启用HTTPS
     )
 # [file content end]
