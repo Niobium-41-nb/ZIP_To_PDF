@@ -272,3 +272,19 @@
 2025-11-09 22:51:59,247 - jm_comic_downloader - INFO - 下载成功 - IP: 172.20.10.1 - JM漫画ID: 352872 - 文件大小: 402.15 MB - 生成PDF数量: 1
 2025-11-10 18:11:46,994 - jm_comic_downloader - INFO - 系统事件 - 类型: system_start - 信息: JM漫画下载服务启动
 2025-11-10 18:11:49,122 - jm_comic_downloader - INFO - 系统事件 - 类型: system_start - 信息: JM漫画下载服务启动
+2025-12-09 22:10:05,922 - jm_comic_downloader - INFO - 系统事件 - 类型: system_start - 信息: JM漫画下载服务启动
+2025-12-09 22:10:07,087 - jm_comic_downloader - INFO - 系统事件 - 类型: system_start - 信息: JM漫画下载服务启动
+2025-12-09 22:10:33,146 - jm_comic_downloader - INFO - 系统事件 - 类型: system_start - 信息: JM漫画下载服务启动
+2025-12-09 22:10:45,361 - jm_comic_downloader - INFO - 系统事件 - 类型: system_start - 信息: JM漫画下载服务启动
+2025-12-09 22:11:55,144 - jm_comic_downloader - INFO - 系统事件 - 类型: system_start - 信息: JM漫画下载服务启动
+2025-12-09 22:11:55,838 - jm_comic_downloader - INFO - 系统事件 - 类型: system_start - 信息: JM漫画下载服务启动
+2025-12-09 22:13:18,995 - jm_comic_downloader - INFO - 系统事件 - 类型: system_start - 信息: JM漫画下载服务启动
+2025-12-09 22:13:19,716 - jm_comic_downloader - INFO - 系统事件 - 类型: system_start - 信息: JM漫画下载服务启动
+2025-12-09 22:14:12,867 - jm_comic_downloader - INFO - 系统事件 - 类型: system_start - 信息: JM漫画下载服务启动
+2025-12-09 22:14:23,213 - jm_comic_downloader - INFO - 系统事件 - 类型: system_start - 信息: JM漫画下载服务启动
+2025-12-09 22:14:23,878 - jm_comic_downloader - INFO - 系统事件 - 类型: system_start - 信息: JM漫画下载服务启动
+2025-12-09 22:14:49,080 - jm_comic_downloader - INFO - 系统事件 - 类型: system_start - 信息: JM漫画下载服务启动
+2025-12-09 22:15:07,716 - jm_comic_downloader - INFO - 系统事件 - 类型: system_start - 信息: JM漫画下载服务启动
+2025-12-09 22:15:11,053 - jm_comic_downloader - INFO - 系统事件 - 类型: system_start - 信息: JM漫画下载服务启动
+2025-12-09 22:15:11,740 - jm_comic_downloader - INFO - 系统事件 - 类型: system_start - 信息: JM漫画下载服务启动
+2025-12-09 22:15:13,791 - jm_comic_downloader - INFO - 系统事件 - 类型: page_access - 信息: 主页访问 - IP: 127.0.0.1
