@@ -11,12 +11,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # 安装系统依赖
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libmagic1 \
     libmagic-dev \
     p7zip-full \
-    unrar \
+    unar \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
@@ -38,7 +38,7 @@ COPY static/js/main.js static/js/
 COPY templates/index.html templates/
 
 # 安装openssl用于生成SSL证书
-RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 
 # 设置Flask环境变量
 ENV FLASK_APP=app.py \
