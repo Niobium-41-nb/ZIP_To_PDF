@@ -1,6 +1,20 @@
 # Flask压缩包转PDF工具
 
+![Docker](https://img.shields.io/badge/Docker-支持-blue?logo=docker)
+![Python](https://img.shields.io/badge/Python-3.12+-green?logo=python)
+![Flask](https://img.shields.io/badge/Flask-Web框架-lightgrey?logo=flask)
+
 一个基于Python Flask的Web应用，能够处理嵌套压缩包，提取其中的图片文件并转换为PDF。同时支持直接从JM漫画下载漫画并自动转换为PDF。
+
+## 🚀 快速部署
+
+| 部署方式 | 命令 | 说明 |
+|---------|------|------|
+| **Docker (推荐)** | `docker-compose up -d` | 一键部署，无需安装Python |
+| **Windows脚本** | 双击 `deploy.bat` | 自动完成所有部署步骤 |
+| **传统方式** | `pip install -r requirements.txt` | 需要Python环境 |
+
+> **立即体验**: [Docker快速启动指南](QUICK_DOCKER_START.md) | [详细部署文档](DOCKER_DEPLOYMENT.md)
 
 ## 功能特性
 
@@ -85,6 +99,37 @@ python run.py 422866 422867
 2. 选择 **"Download JM Comic and Convert to PDF"**
 3. 点击 **"Run workflow"**，输入JM漫画ID
 4. 在Artifacts中下载生成的PDF文件
+
+### 方法4: Docker部署（Windows 11 Docker Desktop）
+使用Docker可以快速部署，无需安装Python环境：
+
+#### 使用Docker Compose（推荐）
+```bash
+# 启动服务
+docker-compose up -d
+
+# 访问 https://localhost:8443
+```
+
+#### 使用部署脚本（Windows）
+```bash
+# 使用批处理脚本
+deploy.bat
+
+# 或使用PowerShell脚本
+.\deploy.ps1 deploy
+```
+
+#### 直接使用Docker
+```bash
+# 构建镜像
+docker build -t jm-tag-to-pdf .
+
+# 运行容器
+docker run -d -p 8443:8443 -p 5000:5000 jm-tag-to-pdf
+```
+
+详细Docker部署指南请参考 [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)
 
 ## 详细使用指南
 
