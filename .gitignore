@@ -1,0 +1,101 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Application files
+uploads/
+temp/
+outputs/
+logs/
+download/
+
+# SSL Certificates - DO NOT COMMIT
+*.pem
+*.key
+*.crt
+*.csr
+cert.pem
+key.pem
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose.yml
+
+# Deployment scripts
+deploy.bat
+deploy.ps1
+
+# Test files
+test_docker.py
+
+# Documentation
+QUICK_DOCKER_START.md
+DOCKER_DEPLOYMENT.md
+
+# ====== 安全敏感文件（永远不要提交） ======
+.env.*
+secrets.*
+config.local.*
+.secrets_backup/
+*.tmp.key
+*.tmp.cert

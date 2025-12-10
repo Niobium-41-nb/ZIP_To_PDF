@@ -13,10 +13,18 @@
 | **Docker (推荐)** | `docker-compose up -d` | 一键部署，无需安装Python |
 | **Windows脚本** | 双击 `deploy.bat` | 自动完成所有部署步骤 |
 | **传统方式** | `pip install -r requirements.txt` | 需要Python环境 |
+| **安全修复** | `python fix_gitguardian_security.py` | 解决GitGuardian安全问题 |
 
-> **立即体验**: [Docker快速启动指南](QUICK_DOCKER_START.md) | [详细部署文档](DOCKER_DEPLOYMENT.md)
+> **立即体验**: [Docker快速启动指南](QUICK_DOCKER_START.md) | [详细部署文档](DOCKER_DEPLOYMENT.md) | [安全修复总结](SECURITY_FIX_SUMMARY.md)
 
-## 功能特性
+## 🔒 安全特性
+
+### 🛡️ 安全加固
+- ✅ **安全证书管理**: SSL证书在运行时动态生成，不提交到Git
+- ✅ **GitGuardian集成**: 自动检测敏感信息泄露
+- ✅ **安全修复工具**: 提供一键修复脚本解决安全问题
+- ✅ **Docker安全配置**: 以非root用户运行，最小化攻击面
+- ✅ **文件权限控制**: 敏感文件设置严格的文件权限
 
 ### 🎯 核心功能
 - ✅ **压缩包转PDF**: 支持ZIP, TAR, RAR, 7Z等格式，自动递归解压嵌套压缩包
@@ -286,8 +294,27 @@ file your_file.zip
 # 清理临时文件
 python run.py --cleanup-temp
 
-# 清理下载文件  
+# 清理下载文件
 python run.py --cleanup
+```
+
+**🔒 GitGuardian安全警报**
+```bash
+# 运行安全修复脚本
+python fix_gitguardian_security.py
+
+# 按照提示完成修复步骤
+# 详细指南: SECURITY_FIX_SUMMARY.md
+```
+
+**🔐 SSL证书问题**
+```bash
+# 重新生成SSL证书
+python generate_cert_safe.py
+
+# 或删除现有证书让应用自动生成
+rm -f cert.pem key.pem
+python run.py --web
 ```
 
 ### 日志诊断

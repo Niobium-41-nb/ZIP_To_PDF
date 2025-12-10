@@ -37,12 +37,8 @@ COPY static/css/style.css static/css/
 COPY static/js/main.js static/js/
 COPY templates/index.html templates/
 
-# 生成SSL证书（如果需要）
-RUN if [ ! -f cert.pem ] || [ ! -f key.pem ]; then \
-    echo "生成自签名SSL证书..." && \
-    openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem \
-    -days 365 -nodes -subj "/C=CN/ST=Beijing/L=Beijing/O=JM Comic/CN=localhost"; \
-    fi
+# 安装openssl用于生成SSL证书
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # 设置Flask环境变量
 ENV FLASK_APP=app.py \
