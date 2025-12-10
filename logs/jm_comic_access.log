@@ -113,3 +113,7 @@
 2025-12-09 22:40:18,563 - IP: 223.75.64.89 - JM_ID: 527619 - Status: error - Error: 漫画下载失败
 2025-12-09 22:40:23,019 - IP: 223.75.64.89 - JM_ID: 649849 - Status: random_started - UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0
 2025-12-09 22:42:17,556 - IP: 223.75.64.89 - JM_ID: 649849 - Status: completed - Size: 42.87 MB - PDFs: 1
+2025-12-10 12:02:48,364 - IP: 127.0.0.1 - JM_ID: 231234 - Status: started - UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2025-12-10 12:02:52,057 - IP: 127.0.0.1 - JM_ID: 231234 - Status: error - Error: 漫画下载失败
+2025-12-10 12:02:59,874 - IP: 127.0.0.1 - JM_ID: 100001 - Status: started - UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2025-12-10 12:05:58,759 - IP: 127.0.0.1 - JM_ID: 100001 - Status: completed - Size: 340.85 MB - PDFs: 1

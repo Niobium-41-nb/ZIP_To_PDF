@@ -333,3 +333,14 @@
 2025-12-09 22:40:23,020 - jm_comic_downloader - INFO - 下载请求 - IP: 223.75.64.89 - JM漫画ID: 649849 - 状态: random_started
 2025-12-09 22:42:17,556 - jm_comic_downloader - INFO - IP: 223.75.64.89 - JM_ID: 649849 - Status: completed - Size: 42.87 MB - PDFs: 1
 2025-12-09 22:42:17,557 - jm_comic_downloader - INFO - 下载成功 - IP: 223.75.64.89 - JM漫画ID: 649849 - 文件大小: 42.87 MB - 生成PDF数量: 1
+2025-12-10 12:02:39,039 - jm_comic_downloader - INFO - 系统事件 - 类型: system_start - 信息: JM漫画下载服务启动
+2025-12-10 12:02:39,589 - jm_comic_downloader - INFO - 系统事件 - 类型: system_start - 信息: JM漫画下载服务启动
+2025-12-10 12:02:43,980 - jm_comic_downloader - INFO - 系统事件 - 类型: page_access - 信息: 主页访问 - IP: 127.0.0.1
+2025-12-10 12:02:48,364 - jm_comic_downloader - INFO - IP: 127.0.0.1 - JM_ID: 231234 - Status: started - UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2025-12-10 12:02:48,365 - jm_comic_downloader - INFO - 下载请求 - IP: 127.0.0.1 - JM漫画ID: 231234 - 状态: started
+2025-12-10 12:02:52,057 - jm_comic_downloader - ERROR - IP: 127.0.0.1 - JM_ID: 231234 - Status: error - Error: 漫画下载失败
+2025-12-10 12:02:52,057 - jm_comic_downloader - ERROR - 下载错误 - IP: 127.0.0.1 - JM漫画ID: 231234 - 错误: 漫画下载失败
+2025-12-10 12:02:59,874 - jm_comic_downloader - INFO - IP: 127.0.0.1 - JM_ID: 100001 - Status: started - UA: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0
+2025-12-10 12:02:59,875 - jm_comic_downloader - INFO - 下载请求 - IP: 127.0.0.1 - JM漫画ID: 100001 - 状态: started
+2025-12-10 12:05:58,759 - jm_comic_downloader - INFO - IP: 127.0.0.1 - JM_ID: 100001 - Status: completed - Size: 340.85 MB - PDFs: 1
+2025-12-10 12:05:58,759 - jm_comic_downloader - INFO - 下载成功 - IP: 127.0.0.1 - JM漫画ID: 100001 - 文件大小: 340.85 MB - 生成PDF数量: 1
