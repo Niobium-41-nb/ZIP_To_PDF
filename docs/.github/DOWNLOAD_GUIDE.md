@@ -1,3 +1,4 @@
+```markdown
 # GitHub Action 使用指南
 
 ## 使用方法
@@ -25,3 +26,4 @@
 - 每个workflow运行时间限制为6小时
 - Artifacts 文件保留7天
 - 请遵守相关法律法规，合理使用
+```
