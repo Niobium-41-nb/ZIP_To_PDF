@@ -1,3 +1,5 @@
+# [file name]: app.py
+# [file content begin]
 import os
 import uuid
 import threading
@@ -8,6 +10,8 @@ from utils.file_utils import FileUtils
 from utils.compression import CompressionHandler
 from utils.image_processor import ImageProcessor
 from utils.pdf_generator import PDFGenerator
+from logging_config import jm_logger  # 导入日志系统
+import cleanup
 
 # 创建Flask应用
 app = Flask(__name__)
@@ -27,6 +31,8 @@ class ProcessingTask:
         self.current_step = ""
         self.result_files = []
         self.error = None
+        self.jm_id = None  # 添加JM ID记录
+        self.start_time = None
     
     def update_status(self, status, progress=None, step=None):
         """更新任务状态"""
@@ -156,9 +162,99 @@ def process_compressed_file(task_id, file_path, output_dir):
         except Exception as cleanup_error:
             print(f"清理临时文件失败: {cleanup_error}")
 
+def process_jm_comic_task(task_id, jm_id, output_dir, client_ip):
+    """处理JM漫画下载和转换的后台任务"""
+    task = ProcessingTask(task_id)
+    task.jm_id = jm_id
+    task.start_time = threading.current_thread().ident
+    
+    try:
+        # 更新任务状态
+        task.update_status("开始下载JM漫画", 10, "下载漫画")
+        
+        # 使用github_action.py中的下载逻辑
+        from github_action import download_jm_comic, process_comic_directly
+        
+        # 设置下载目录
+        download_dir = 'download'
+        os.makedirs(download_dir, exist_ok=True)
+        
+        # 下载漫画
+        task.update_status("正在下载漫画", 20, "下载中")
+        zip_path = download_jm_comic(jm_id, download_dir)
+        
+        if not zip_path:
+            task.update_status("漫画下载失败", 100, "错误")
+            task.error = "漫画下载失败"
+            # 记录错误日志
+            jm_logger.log_download_error(client_ip, jm_id, "漫画下载失败")
+            return
+            
+        task.update_status("漫画下载完成", 40, "下载完成")
+        
+        # 处理漫画
+        task.update_status("开始处理漫画", 50, "处理中")
+        success = process_comic_directly(jm_id, zip_path, download_dir)
+        
+        if success:
+            # 查找生成的PDF文件
+            pdf_files = []
+            total_size = 0
+            for file in os.listdir(download_dir):
+                if file.endswith('.pdf') and f"jm_{jm_id}" in file:
+                    file_path = os.path.join(download_dir, file)
+                    pdf_files.append(file_path)
+                    total_size += os.path.getsize(file_path)
+            
+            if pdf_files:
+                # 如果只有一个PDF，直接作为结果
+                if len(pdf_files) == 1:
+                    task.result_files = [pdf_files[0]]
+                    processing_results[task_id] = {
+                        'pdf_files': pdf_files,
+                        'zip_file': pdf_files[0]  # 单个文件也作为zip_file返回
+                    }
+                else:
+                    # 多个PDF文件，打包成ZIP
+                    import zipfile
+                    zip_path = os.path.join(output_dir, f"jm_{jm_id}_result.zip")
+                    
+                    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                        for pdf_file in pdf_files:
+                            zipf.write(pdf_file, os.path.basename(pdf_file))
+                    
+                    task.result_files = [zip_path]
+                    processing_results[task_id] = {
+                        'pdf_files': pdf_files,
+                        'zip_file': zip_path
+                    }
+                
+                task.update_status("处理完成", 100, "完成")
+                # 记录成功日志
+                jm_logger.log_download_success(client_ip, jm_id, total_size, len(pdf_files))
+            else:
+                task.update_status("未找到生成的PDF文件", 100, "错误")
+                task.error = "未找到生成的PDF文件"
+                jm_logger.log_download_error(client_ip, jm_id, "未找到生成的PDF文件")
+        else:
+            task.update_status("漫画处理失败", 100, "错误")
+            task.error = "漫画处理失败"
+            jm_logger.log_download_error(client_ip, jm_id, "漫画处理失败")
+            
+    except Exception as e:
+        error_msg = str(e)
+        task.update_status(f"处理失败: {error_msg}", 100, "错误")
+        task.error = error_msg
+        # 记录异常日志
+        jm_logger.log_download_error(client_ip, jm_id, error_msg)
+        import traceback
+        traceback.print_exc()
+
 @app.route('/')
 def index():
     """主页"""
+    # 记录页面访问
+    jm_logger.log_system_event('page_access', f"主页访问 - IP: {jm_logger._get_client_ip(request)}")
     return render_template('index.html')
 
 @app.route('/upload', methods=['POST'])
@@ -196,6 +292,11 @@ def upload_file():
             os.remove(file_path)
             return jsonify({'error': '文件大小超过1GB限制'}), 400
         
+        # 记录文件上传日志
+        client_ip = jm_logger._get_client_ip(request)
+        jm_logger.log_system_event('file_upload', 
+                                  f"IP: {client_ip} - 文件: {filename} - 大小: {file_size}MB")
+        
         # 启动后台处理任务
         output_dir = app.config['OUTPUT_FOLDER']
         thread = threading.Thread(
@@ -211,24 +312,34 @@ def upload_file():
         })
         
     except Exception as e:
+        jm_logger.log_system_event('upload_error', f"上传失败: {str(e)}")
         return jsonify({'error': f'上传失败: {str(e)}'}), 500
+
 
 @app.route('/status/<task_id>')
 def get_status(task_id):
     """获取处理状态"""
     if task_id in processing_status:
         status_info = processing_status[task_id]
-        
+
         # 检查是否完成且有结果
         if status_info['status'] == '处理完成' and task_id in processing_results:
             result = processing_results[task_id]
             status_info['download_url'] = f'/download/{task_id}'
-            status_info['pdf_count'] = len(result.get('pdf_files', []))
+            pdf_files = result.get('pdf_files', [])
+            status_info['pdf_count'] = len(pdf_files)
+            status_info['file_count'] = len(pdf_files)  # 添加文件数量
             status_info['pdf_list_url'] = f'/download/list/{task_id}'
-        
+
         return jsonify(status_info)
     else:
-        return jsonify({'error': '任务不存在'}), 404
+        return jsonify({
+            'status': '等待开始',
+            'progress': 0,
+            'current_step': '任务初始化中',
+            'error': None,
+            'file_count': 0
+        })
 
 @app.route('/download/<task_id>')
 def download_result(task_id):
@@ -239,6 +350,12 @@ def download_result(task_id):
         
         if zip_file and os.path.exists(zip_file):
             filename = f"converted_pdfs_{task_id}.zip"
+            
+            # 记录下载日志
+            client_ip = jm_logger._get_client_ip(request)
+            jm_logger.log_system_event('file_download', 
+                                      f"IP: {client_ip} - 文件: {filename}")
+            
             return send_file(zip_file, as_attachment=True, download_name=filename)
     
     return jsonify({'error': '文件不存在或尚未完成'}), 404
@@ -254,7 +371,31 @@ def download_single_pdf(task_id, pdf_index):
             pdf_file = pdf_files[pdf_index]
             if os.path.exists(pdf_file):
                 filename = os.path.basename(pdf_file)
+                
+                # 记录PDF下载日志
+                client_ip = jm_logger._get_client_ip(request)
+                jm_logger.log_system_event('pdf_download', 
+                                          f"IP: {client_ip} - PDF文件: {filename}")
+                
                 return send_file(pdf_file, as_attachment=True, download_name=filename)
+    
+    return jsonify({'error': 'PDF文件不存在'}), 404
+
+@app.route('/preview/pdf/<task_id>/<int:pdf_index>')
+def preview_single_pdf(task_id, pdf_index):
+    """预览单个PDF文件（内嵌显示）"""
+    if task_id in processing_results:
+        result = processing_results[task_id]
+        pdf_files = result.get('pdf_files', [])
+        
+        if 0 <= pdf_index < len(pdf_files):
+            pdf_file = pdf_files[pdf_index]
+            if os.path.exists(pdf_file):
+                # 设置正确的MIME类型和内嵌显示头信息
+                response = send_file(pdf_file)
+                response.headers['Content-Type'] = 'application/pdf'
+                response.headers['Content-Disposition'] = f'inline; filename="{os.path.basename(pdf_file)}"'
+                return response
     
     return jsonify({'error': 'PDF文件不存在'}), 404
 
@@ -272,13 +413,138 @@ def list_pdf_files(task_id):
                     'index': i,
                     'filename': os.path.basename(pdf_file),
                     'size': os.path.getsize(pdf_file),
-                    'download_url': f'/download/pdf/{task_id}/{i}'
+                    'download_url': f'/download/pdf/{task_id}/{i}',
+                    'preview_url': f'/preview/pdf/{task_id}/{i}'  # 添加预览URL
                 }
                 file_list.append(file_info)
         
         return jsonify({'pdf_files': file_list})
     
     return jsonify({'error': '任务不存在'}), 404
+
+@app.route('/download_jm', methods=['POST'])
+def download_jm_comic():
+    """JM漫画下载接口"""
+    try:
+        data = request.get_json()
+        jm_id = data.get('jm_id')
+        
+        if not jm_id:
+            return jsonify({'error': '缺少JM漫画ID'}), 400
+        
+        # 验证JM ID格式
+        if not jm_id.isdigit():
+            return jsonify({'error': 'JM漫画ID必须是数字'}), 400
+            
+        # 生成任务ID
+        task_id = str(uuid.uuid4())
+        
+        # 获取客户端信息
+        client_ip = jm_logger._get_client_ip(request)
+        user_agent = request.headers.get('User-Agent', 'Unknown')
+        
+        # 记录下载请求
+        jm_logger.log_download_request(client_ip, jm_id, user_agent, 'started')
+        
+        # 立即创建任务状态记录，避免"任务不存在"错误
+        processing_status[task_id] = {
+            'status': '开始下载',
+            'progress': 0,
+            'current_step': '初始化',
+            'error': None
+        }
+        
+        # 启动后台处理任务
+        output_dir = app.config['OUTPUT_FOLDER']
+        thread = threading.Thread(
+            target=process_jm_comic_task,
+            args=(task_id, jm_id, output_dir, client_ip)
+        )
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'task_id': task_id, 
+            'message': '开始下载JM漫画',
+            'status': '开始下载'
+        })
+        
+    except Exception as e:
+        # 记录下载错误
+        client_ip = jm_logger._get_client_ip(request)
+        jm_id = data.get('jm_id', 'unknown') if 'data' in locals() else 'unknown'
+        jm_logger.log_download_error(client_ip, jm_id, f"下载接口错误: {str(e)}")
+        
+        return jsonify({'error': f'下载失败: {str(e)}'}), 500
+
+@app.route('/logs/access')
+def view_access_logs():
+    """查看访问日志（需要认证）"""
+    try:
+        # 这里可以添加认证逻辑
+        log_file = 'logs/jm_comic_access.log'
+        if os.path.exists(log_file):
+            with open(log_file, 'r', encoding='utf-8') as f:
+                logs = f.readlines()
+            # 返回最新的100条日志
+            return jsonify({'logs': logs[-100:]})
+        else:
+            return jsonify({'logs': []})
+    except Exception as e:
+        return jsonify({'error': f'读取日志失败: {str(e)}'}), 500
+
+@app.route('/logs/stats')
+def get_log_stats():
+    """获取日志统计信息"""
+    try:
+        # 这里可以添加认证逻辑
+        log_file = 'logs/jm_comic_access.log'
+        stats = {
+            'total_downloads': 0,
+            'successful_downloads': 0,
+            'failed_downloads': 0,
+            'unique_ips': set(),
+            'popular_jm_ids': {}
+        }
+        
+        if os.path.exists(log_file):
+            with open(log_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if 'JM_ID:' in line:
+                        stats['total_downloads'] += 1
+                        
+                        # 提取IP
+                        if 'IP:' in line:
+                            ip = line.split('IP: ')[1].split(' -')[0]
+                            stats['unique_ips'].add(ip)
+                        
+                        # 提取JM ID和状态
+                        if 'JM_ID:' in line:
+                            jm_id = line.split('JM_ID: ')[1].split(' -')[0]
+                            if 'Status: completed' in line:
+                                stats['successful_downloads'] += 1
+                            elif 'Status: error' in line:
+                                stats['failed_downloads'] += 1
+                            
+                            # 统计热门JM ID
+                            if jm_id in stats['popular_jm_ids']:
+                                stats['popular_jm_ids'][jm_id] += 1
+                            else:
+                                stats['popular_jm_ids'][jm_id] = 1
+        
+        # 转换set为list
+        stats['unique_ips'] = list(stats['unique_ips'])
+        # 排序热门JM ID
+        stats['popular_jm_ids'] = dict(sorted(
+            stats['popular_jm_ids'].items(), 
+            key=lambda x: x[1], 
+            reverse=True
+        )[:10])  # 只显示前10个
+        
+        return jsonify(stats)
+        
+    except Exception as e:
+        return jsonify({'error': f'获取统计信息失败: {str(e)}'}), 500
 
 @app.route('/cleanup', methods=['POST'])
 def cleanup_files():
@@ -293,8 +559,12 @@ def cleanup_files():
         # 清理输出文件（保留时间更长）
         FileUtils.cleanup_old_files(app.config['OUTPUT_FOLDER'], hours_old=48)
         
+        # 记录清理操作
+        jm_logger.log_system_event('cleanup', '临时文件清理完成')
+        
         return jsonify({'message': '清理完成'})
     except Exception as e:
+        jm_logger.log_system_event('cleanup_error', f"清理失败: {str(e)}")
         return jsonify({'error': f'清理失败: {str(e)}'}), 500
 
 @app.route('/cleanup/task/<task_id>', methods=['POST'])
@@ -307,13 +577,154 @@ def cleanup_task_files(task_id):
             app.config['TEMP_FOLDER'],
             app.config['OUTPUT_FOLDER']
         )
+        
+        # 记录任务清理
+        jm_logger.log_system_event('task_cleanup', f"任务 {task_id} 文件清理完成")
+        
         return jsonify({'message': f'任务 {task_id} 文件清理完成'})
     except Exception as e:
+        jm_logger.log_system_event('task_cleanup_error', f"任务 {task_id} 清理失败: {str(e)}")
         return jsonify({'error': f'清理失败: {str(e)}'}), 500
 
+# 在 app.py 中添加以下函数和路由
+
+import random
+
+def generate_random_jm_id():
+    """生成随机的6位数JM漫画ID"""
+    return str(random.randint(100000, 999999))
+
+@app.route('/download_random_jm', methods=['POST'])
+def download_random_jm_comic():
+    """随机JM漫画下载接口"""
+    try:
+        # 生成随机6位数JM ID
+        jm_id = generate_random_jm_id()
+        
+        # 生成任务ID
+        task_id = str(uuid.uuid4())
+        
+        # 获取客户端信息
+        client_ip = jm_logger._get_client_ip(request)
+        user_agent = request.headers.get('User-Agent', 'Unknown')
+        
+        # 记录下载请求
+        jm_logger.log_download_request(client_ip, jm_id, user_agent, 'random_started')
+        
+        # 立即创建任务状态记录
+        processing_status[task_id] = {
+            'status': '开始随机下载',
+            'progress': 0,
+            'current_step': '生成随机ID',
+            'error': None,
+            'jm_id': jm_id  # 保存生成的JM ID
+        }
+        
+        # 启动后台处理任务
+        output_dir = app.config['OUTPUT_FOLDER']
+        thread = threading.Thread(
+            target=process_jm_comic_task,
+            args=(task_id, jm_id, output_dir, client_ip)
+        )
+        thread.daemon = True
+        thread.start()
+        
+        return jsonify({
+            'task_id': task_id, 
+            'message': f'开始下载随机JM漫画 (ID: {jm_id})',
+            'jm_id': jm_id,
+            'status': '开始下载'
+        })
+        
+    except Exception as e:
+        # 记录下载错误
+        client_ip = jm_logger._get_client_ip(request)
+        jm_logger.log_download_error(client_ip, 'random', f"随机下载接口错误: {str(e)}")
+        
+        return jsonify({'error': f'随机下载失败: {str(e)}'}), 500
+
+@app.route('/batch_download_jm', methods=['POST'])
+def batch_download_jm_comic():
+    """批量随机JM漫画下载接口"""
+    try:
+        data = request.get_json()
+        count = data.get('count', 1)  # 默认下载1个
+        
+        # 限制最大数量
+        if count > 10:
+            count = 10
+        
+        task_ids = []
+        jm_ids = []
+        
+        for i in range(count):
+            # 生成随机6位数JM ID
+            jm_id = generate_random_jm_id()
+            
+            # 生成任务ID
+            task_id = str(uuid.uuid4())
+            
+            # 获取客户端信息
+            client_ip = jm_logger._get_client_ip(request)
+            user_agent = request.headers.get('User-Agent', 'Unknown')
+            
+            # 记录下载请求
+            jm_logger.log_download_request(client_ip, jm_id, user_agent, 'batch_random_started')
+            
+            # 立即创建任务状态记录
+            processing_status[task_id] = {
+                'status': f'开始批量下载 ({i+1}/{count})',
+                'progress': 0,
+                'current_step': '生成随机ID',
+                'error': None,
+                'jm_id': jm_id
+            }
+            
+            # 启动后台处理任务
+            output_dir = app.config['OUTPUT_FOLDER']
+            thread = threading.Thread(
+                target=process_jm_comic_task,
+                args=(task_id, jm_id, output_dir, client_ip)
+            )
+            thread.daemon = True
+            thread.start()
+            
+            task_ids.append(task_id)
+            jm_ids.append(jm_id)
+        
+        return jsonify({
+            'task_ids': task_ids, 
+            'jm_ids': jm_ids,
+            'message': f'开始批量下载 {count} 个随机JM漫画',
+            'status': '批量下载开始'
+        })
+        
+    except Exception as e:
+        client_ip = jm_logger._get_client_ip(request)
+        jm_logger.log_download_error(client_ip, 'batch_random', f"批量随机下载接口错误: {str(e)}")
+        
+        return jsonify({'error': f'批量随机下载失败: {str(e)}'}), 500
+
+
 if __name__ == '__main__':
+    cleanup.clean_files("download")
+    cleanup.clean_files("outputs")
+    cleanup.clean_files("temp")
+    cleanup.clean_files("uploads")
+
     # 创建必要的目录
     FileUtils.create_directories()
-    
-    # 启动应用
-    app.run(debug=True, host='0.0.0.0', port=5000)
+
+    # 初始化日志系统
+    jm_logger.setup_logging()
+    jm_logger.log_system_event('system_start', 'JM漫画下载服务启动')
+
+    # 启动应用 - 关键修改在这里
+    app.run(
+        debug=True,
+        host='0.0.0.0',  # 允许所有网络接口访问
+        port=8443,  # 端口号
+        threaded=True,  # 启用多线程处理并发请求
+        ssl_context=('cert.pem', 'key.pem')  # 启用HTTPS
+    )
+# [file content end]

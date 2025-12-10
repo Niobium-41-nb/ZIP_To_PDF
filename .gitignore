@@ -19,12 +19,37 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
 
 # Virtual Environment
-venv/
-env/
-ENV/
 .env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
 # IDE
 .vscode/
@@ -43,12 +68,38 @@ key.pem
 uploads/
 outputs/
 downloads/
+logs/
+temp/
 *.pem
 *.key
 *.crt
 *.cer
 *.p12
 *.pfx
+*.csr
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose.yml
+
+# Deployment scripts
+deploy.bat
+deploy.ps1
+
+# Test files
+test_docker.py
+
+# Documentation
+QUICK_DOCKER_START.md
+DOCKER_DEPLOYMENT.md
+
+# Security sensitive files (never commit)
+.env.*
+secrets.*
+config.local.*
+*.tmp.key
+*.tmp.cert
 
 # Logs
 *.log

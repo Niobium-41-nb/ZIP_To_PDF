@@ -1,8 +1,31 @@
+````markdown
 # Flask压缩包转PDF工具
+
+![Docker](https://img.shields.io/badge/Docker-支持-blue?logo=docker)
+![Python](https://img.shields.io/badge/Python-3.12+-green?logo=python)
+![Flask](https://img.shields.io/badge/Flask-Web框架-lightgrey?logo=flask)
 
 一个基于Python Flask的Web应用，能够处理嵌套压缩包，提取其中的图片文件并转换为PDF。同时支持直接从JM漫画下载漫画并自动转换为PDF。
 
-## 功能特性
+## 🚀 快速部署
+
+| 部署方式 | 命令 | 说明 |
+|---------|------|------|
+| **Docker (推荐)** | `docker-compose up -d` | 一键部署，无需安装Python |
+| **Windows脚本** | 双击 `deploy.bat` | 自动完成所有部署步骤 |
+| **传统方式** | `pip install -r requirements.txt` | 需要Python环境 |
+| **安全修复** | `python fix_gitguardian_security.py` | 解决GitGuardian安全问题 |
+
+> **立即体验**: [Docker快速启动指南](QUICK_DOCKER_START.md) | [详细部署文档](DOCKER_DEPLOYMENT.md) | [安全修复总结](SECURITY_FIX_SUMMARY.md)
+
+## 🔒 安全特性
+
+### 🛡️ 安全加固
+- ✅ **安全证书管理**: SSL证书在运行时动态生成，不提交到Git
+- ✅ **GitGuardian集成**: 自动检测敏感信息泄露
+- ✅ **安全修复工具**: 提供一键修复脚本解决安全问题
+- ✅ **Docker安全配置**: 以非root用户运行，最小化攻击面
+- ✅ **文件权限控制**: 敏感文件设置严格的文件权限
 
 ### 🎯 核心功能
 - ✅ **压缩包转PDF**: 支持ZIP, TAR, RAR, 7Z等格式，自动递归解压嵌套压缩包
@@ -85,6 +108,37 @@ python run.py 422866 422867
 2. 选择 **"Download JM Comic and Convert to PDF"**
 3. 点击 **"Run workflow"**，输入JM漫画ID
 4. 在Artifacts中下载生成的PDF文件
+
+### 方法4: Docker部署（Windows 11 Docker Desktop）
+使用Docker可以快速部署，无需安装Python环境：
+
+#### 使用Docker Compose（推荐）
+```bash
+# 启动服务
+docker-compose up -d
+
+# 访问 https://localhost:8443
+```
+
+#### 使用部署脚本（Windows）
+```bash
+# 使用批处理脚本
+deploy.bat
+
+# 或使用PowerShell脚本
+.\deploy.ps1 deploy
+```
+
+#### 直接使用Docker
+```bash
+# 构建镜像
+docker build -t jm-tag-to-pdf .
+
+# 运行容器
+docker run -d -p 8443:8443 -p 5000:5000 jm-tag-to-pdf
+```
+
+详细Docker部署指南请参考 [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)
 
 ## 详细使用指南
 
@@ -241,8 +295,27 @@ file your_file.zip
 # 清理临时文件
 python run.py --cleanup-temp
 
-# 清理下载文件  
+# 清理下载文件
 python run.py --cleanup
+```
+
+**🔒 GitGuardian安全警报**
+```bash
+# 运行安全修复脚本
+python fix_gitguardian_security.py
+
+# 按照提示完成修复步骤
+# 详细指南: SECURITY_FIX_SUMMARY.md
+```
+
+**🔐 SSL证书问题**
+```bash
+# 重新生成SSL证书
+python generate_cert_safe.py
+
+# 或删除现有证书让应用自动生成
+rm -f cert.pem key.pem
+python run.py --web
 ```
 
 ### 日志诊断
@@ -290,3 +363,4 @@ python test_github_action.py
 ---
 
 **温馨提示**: 请合理使用本工具，遵守相关法律法规，尊重版权，不要过度爬取以免对服务器造成压力。
+````

@@ -49,7 +49,18 @@ def check_dependencies():
 def open_browser():
     """在浏览器中打开应用"""
     time.sleep(2)  # 等待应用启动
-    webbrowser.open('http://localhost:5000')
+    # 优先尝试HTTPS，如果失败则使用HTTP
+    try:
+        import ssl
+        import urllib.request
+        # 尝试HTTPS连接
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+        urllib.request.urlopen('https://localhost:8443', context=context, timeout=2)
+        webbrowser.open('https://localhost:8443')
+    except:
+        webbrowser.open('http://localhost:5000')
 
 def setup_download_directory():
     """设置下载目录"""
@@ -278,23 +289,90 @@ def process_jm_comic(jm_id):
         cleanup_temp_files()
         return False
 
+def generate_ssl_certificates():
+    """生成自签名SSL证书"""
+    try:
+        cert_file = 'cert.pem'
+        key_file = 'key.pem'
+        
+        # 检查证书是否已存在
+        if os.path.exists(cert_file) and os.path.exists(key_file):
+            print(f"SSL证书已存在: {cert_file}, {key_file}")
+            return True
+        
+        print("生成自签名SSL证书...")
+        
+        # 使用openssl生成证书
+        import subprocess
+        subprocess.run([
+            'openssl', 'req', '-x509', '-newkey', 'rsa:4096',
+            '-keyout', key_file, '-out', cert_file,
+            '-days', '365', '-nodes',
+            '-subj', '/C=CN/ST=Beijing/L=Beijing/O=JM Comic/CN=localhost'
+        ], check=True)
+        
+        print(f"SSL证书已生成: {cert_file}, {key_file}")
+        return True
+        
+    except Exception as e:
+        print(f"生成SSL证书失败: {e}")
+        print("将使用HTTP模式运行")
+        return False
+
 def start_web_app():
     """启动Web应用"""
     try:
         from app import app
         
         print("启动Flask应用...")
-        print("应用地址: http://localhost:5000")
-        print("按 Ctrl+C 停止应用")
-        print("-" * 50)
         
-        # 在浏览器中打开应用
-        browser_thread = threading.Thread(target=open_browser)
-        browser_thread.daemon = True
-        browser_thread.start()
+        # 检查是否在Docker环境中
+        in_docker = os.path.exists('/.dockerenv')
         
-        # 启动Flask应用
-        app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
+        # 生成SSL证书（如果不存在）
+        ssl_available = generate_ssl_certificates()
+        
+        if ssl_available and os.path.exists('cert.pem') and os.path.exists('key.pem'):
+            print("应用地址: https://localhost:8443 (HTTPS)")
+            print("备用地址: http://localhost:5000 (HTTP)")
+            
+            # 在浏览器中打开HTTPS应用
+            browser_thread = threading.Thread(target=lambda: webbrowser.open('https://localhost:8443'))
+            browser_thread.daemon = True
+            browser_thread.start()
+            
+            # 启动Flask应用，支持HTTPS和HTTP
+            from werkzeug.serving import make_ssl_devcert
+            import ssl
+            
+            context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            context.load_cert_chain('cert.pem', 'key.pem')
+            
+            # 在一个线程中启动HTTPS服务器
+            def run_https():
+                app.run(debug=False, host='0.0.0.0', port=8443, ssl_context=context, use_reloader=False)
+            
+            https_thread = threading.Thread(target=run_https)
+            https_thread.daemon = True
+            https_thread.start()
+            
+            # 在主线程中启动HTTP服务器
+            print("按 Ctrl+C 停止应用")
+            print("-" * 50)
+            app.run(debug=False, host='0.0.0.0', port=5000, use_reloader=False)
+            
+        else:
+            print("应用地址: http://localhost:5000")
+            print("按 Ctrl+C 停止应用")
+            print("-" * 50)
+            
+            # 在浏览器中打开HTTP应用
+            browser_thread = threading.Thread(target=open_browser)
+            browser_thread.daemon = True
+            browser_thread.start()
+            
+            # 启动Flask应用（仅HTTP）
+            app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)
         
     except KeyboardInterrupt:
         print("\n应用已停止")
@@ -388,14 +466,31 @@ def is_github_actions():
     """检查是否在 GitHub Actions 环境中运行"""
     return os.getenv('GITHUB_ACTIONS') == 'true'
 
-def generate_random_six_digit():
-    """生成随机的六位数整数
-    
-    返回:
-        int: 一个介于100000到999999之间的随机整数
-    """
-    return random.randint(100000, 999999)
+def download_random_jm_comic():
+    """下载随机JM漫画"""
+    try:
+        # 生成随机ID
+        jm_id = str(random.randint(100000, 999999))
+        print(f"生成的随机JM ID: {jm_id}")
+        
+        # 使用现有的下载逻辑
+        return process_jm_comic(jm_id)
+    except Exception as e:
+        print(f"随机下载失败: {e}")
+        return False
 
+def batch_download_random_comics(count=5):
+    """批量下载随机漫画"""
+    success_count = 0
+    for i in range(count):
+        print(f"\n正在下载第 {i+1}/{count} 个随机漫画...")
+        if download_random_jm_comic():
+            success_count += 1
+        # 添加延迟避免请求过快
+        time.sleep(2)
+    
+    print(f"\n批量下载完成！成功: {success_count}/{count}")
+    return success_count
 
 def main():
     """主函数"""
@@ -460,12 +555,13 @@ def main():
         print("\n请选择模式:")
         print("1. 启动Web界面")
         print("2. 下载JM漫画并转换为PDF")
-        print("3. 清理下载文件")
-        print("4. 清理临时文件")
-        print("5. 清理temp文件夹中的所有内容")
-        print("6. 下载随机JM漫画并转换为PDF")
+        print("3. 随机下载JM漫画")
+        print("4. 批量随机下载JM漫画")
+        print("5. 清理下载文件")
+        print("6. 清理临时文件")
+        print("7. 清理temp文件夹中的所有内容")
         
-        choice = input("\n请输入选择 (1-6): ").strip()
+        choice = input("\n请输入选择 (1-7): ").strip()
         
         if choice == '1':
             start_web_app()
@@ -475,13 +571,26 @@ def main():
                 process_jm_comic(jm_id)
             else:
                 print("无效的JM ID")
-            cleanup_all_temp_files()
-            cleanup_temp_files()
         elif choice == '3':
-            cleanup_all_downloads()
+            print("开始随机下载JM漫画...")
+            download_random_jm_comic()
         elif choice == '4':
-            cleanup_temp_files()
+            count = input("请输入要下载的数量 (1-10): ").strip()
+            try:
+                count = int(count)
+                if count < 1:
+                    count = 1
+                elif count > 10:
+                    count = 10
+                batch_download_random_comics(count)
+            except ValueError:
+                print("无效的数量，使用默认值 5")
+                batch_download_random_comics(5)
         elif choice == '5':
+            cleanup_all_downloads()
+        elif choice == '6':
+            cleanup_temp_files()
+        elif choice == '7':
             cleanup_all_temp_files()
         elif choice == '6':
             while True:
