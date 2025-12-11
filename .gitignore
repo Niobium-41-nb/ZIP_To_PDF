@@ -76,8 +76,6 @@ temp/
 *.p12
 *.pfx
 *.csr
-*.log
-*.log
 
 # Docker
 .dockerignore
@@ -104,3 +102,5 @@ config.local.*
 
 # Logs
 *.log
+logs/
+
