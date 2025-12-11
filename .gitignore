@@ -68,7 +68,6 @@ key.pem
 uploads/
 outputs/
 downloads/
-logs/
 temp/
 *.pem
 *.key
@@ -77,6 +76,8 @@ temp/
 *.p12
 *.pfx
 *.csr
+*.log
+*.log
 
 # Docker
 .dockerignore
