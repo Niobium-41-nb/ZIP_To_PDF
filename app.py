@@ -705,6 +705,24 @@ def batch_download_jm_comic():
         
         return jsonify({'error': f'批量随机下载失败: {str(e)}'}), 500
 
+def main_https():
+    # 启动应用 - 关键修改在这里
+    app.run(
+        debug=True,
+        host='0.0.0.0',  # 允许所有网络接口访问
+        port=8443,  # 端口号
+        threaded=True,  # 启用多线程处理并发请求
+        ssl_context=('cert.pem', 'key.pem')  # 启用HTTPS
+    )
+
+def main_http():
+    # 启动应用 - 关键修改在这里
+    app.run(
+        debug=True,
+        host='0.0.0.0',  # 允许所有网络接口访问
+        port=8443,  # 端口号
+        threaded=True,  # 启用多线程处理并发请求
+    )
 
 if __name__ == '__main__':
     cleanup.clean_files("download")
@@ -719,12 +737,9 @@ if __name__ == '__main__':
     jm_logger.setup_logging()
     jm_logger.log_system_event('system_start', 'JM漫画下载服务启动')
 
-    # 启动应用 - 关键修改在这里
-    app.run(
-        debug=True,
-        host='0.0.0.0',  # 允许所有网络接口访问
-        port=8443,  # 端口号
-        threaded=True,  # 启用多线程处理并发请求
-        ssl_context=('cert.pem', 'key.pem')  # 启用HTTPS
-    )
+    # 启用HTTP
+    main_http()
+
+    # 启用HTTPS
+    main_https()
 # [file content end]
