@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIP转PDF工具集 - 仪表板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            color: #666;
+            max-width: 800px;
+            margin: 0 auto 20px;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+        
+        .card-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .card-title {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #333;
+            text-align: center;
+        }
+        
+        .card-description {
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.6;
+            flex-grow: 1;
+        }
+        
+        .card-features {
+            margin-bottom: 25px;
+            padding-left: 20px;
+        }
+        
+        .card-features li {
+            margin-bottom: 8px;
+            color: #555;
+        }
+        
+        .card-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .card-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        }
+        
+        .card-btn.disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        
+        .card-btn.disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+        
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-coming {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-maintenance {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .system-status {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-top: 30px;
+        }
+        
+        .system-status h2 {
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .status-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #4facfe;
+        }
+        
+        .status-label {
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+        
+        .status-value {
+            font-size: 1.2em;
+            color: #333;
+        }
+        
+        .status-value.good {
+            color: #28a745;
+        }
+        
+        .status-value.warning {
+            color: #ffc107;
+        }
+        
+        .status-value.error {
+            color: #dc3545;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2.2em;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ZIP转PDF工具集</h1>
+            <p>一站式文件处理平台，提供多种文件转换和下载功能</p>
+            <div style="margin-top: 20px;">
+                <a href="/convert" style="color: #667eea; text-decoration: none; margin-right: 15px;">📦 压缩包转PDF</a>
+                <a href="/jm" style="color: #667eea; text-decoration: none;">📚 JM漫画下载</a>
+            </div>
+        </div>
+        
+        <div class="dashboard-grid">
+            <!-- 压缩包转PDF -->
+            <div class="card">
+                <div class="card-icon">📦➡️📄</div>
+                <div class="card-title">
+                    压缩包转PDF
+                    <span class="status-badge status-active">已上线</span>
+                </div>
+                <div class="card-description">
+                    上传ZIP、RAR、7Z等压缩文件，自动解压并将图片转换为PDF文档。支持批量处理和智能排序。
+                </div>
+                <ul class="card-features">
+                    <li>支持多种压缩格式：ZIP, RAR, 7Z, TAR等</li>
+                    <li>自动识别和排序图片文件</li>
+                    <li>生成高质量的A4尺寸PDF</li>
+                    <li>批量处理多个文件夹</li>
+                </ul>
+                <a href="/convert" class="card-btn">立即使用</a>
+            </div>
+            
+            <!-- JM漫画下载 -->
+            <div class="card">
+                <div class="card-icon">📚🔥</div>
+                <div class="card-title">
+                    JM漫画下载
+                    <span class="status-badge status-active">已上线</span>
+                </div>
+                <div class="card-description">
+                    下载JM漫画并自动转换为PDF格式。支持单个和批量下载，自动处理图片排序和格式转换。
+                </div>
+                <ul class="card-features">
+                    <li>支持JM漫画ID下载</li>
+                    <li>单个和批量下载模式</li>
+                    <li>自动转换为PDF格式</li>
+                    <li>实时进度显示和错误重试</li>
+                </ul>
+                <a href="/jm" class="card-btn">开始下载</a>
+            </div>
+            
+            <!-- 预留功能1：图片批量处理 -->
+            <div class="card">
+                <div class="card-icon">🖼️✨</div>
+                <div class="card-title">
+                    图片批量处理
+                    <span class="status-badge status-coming">开发中</span>
+                </div>
+                <div class="card-description">
+                    批量处理图片文件，包括格式转换、尺寸调整、水印添加、压缩优化等功能。
+                </div>
+                <ul class="card-features">
+                    <li>图片格式转换（JPG, PNG, WEBP等）</li>
+                    <li>批量尺寸调整和裁剪</li>
+                    <li>添加文字或图片水印</li>
+                    <li>图片压缩和优化</li>
+                </ul>
+                <button class="card-btn disabled">即将上线</button>
+            </div>
+            
+            <!-- 预留功能2：PDF工具集 -->
+            <div class="card">
+                <div class="card-icon">📄🔧</div>
+                <div class="card-title">
+                    PDF工具集
+                    <span class="status-badge status-coming">规划中</span>
+                </div>
+                <div class="card-description">
+                    PDF文件处理工具集合，包括合并、拆分、加密、解密、旋转、压缩等功能。
+                </div>
+                <ul class="card-features">
+                    <li>PDF合并和拆分</li>
+                    <li>PDF加密和解密保护</li>
+                    <li>页面旋转和重新排序</li>
+                    <li>PDF压缩和优化</li>
+                </ul>
+                <button class="card-btn disabled">敬请期待</button>
+            </div>
+            
+            <!-- 预留功能3：在线文档转换 -->
+            <div class="card">
+                <div class="card-icon">📄🔄</div>
+                <div class="card-title">
+                    在线文档转换
+                    <span class="status-badge status-coming">规划中</span>
+                </div>
+                <div class="card-description">
+                    支持多种文档格式在线转换，包括Word、Excel、PPT、图片、PDF等格式互转。
+                </div>
+                <ul class="card-features">
+                    <li>Word/Excel/PPT转PDF</li>
+                    <li>PDF转Word/Excel/PPT</li>
+                    <li>图片转PDF/Word</li>
+                    <li>多种格式互转支持</li>
+                </ul>
+                <button class="card-btn disabled">开发计划</button>
+            </div>
+            
+            <!-- 预留功能4：文件管理 -->
+            <div class="card">
+                <div class="card-icon">🗂️📊</div>
+                <div class="card-title">
+                    文件管理
+                    <span class="status-badge status-coming">规划中</span>
+                </div>
+                <div class="card-description">
+                    在线文件管理系统，支持文件上传、下载、分享、分类管理和批量操作。
+                </div>
+                <ul class="card-features">
+                    <li>文件上传和下载管理</li>
+                    <li>文件分类和标签系统</li>
+                    <li>文件分享和权限控制</li>
+                    <li>批量文件操作</li>
+                </ul>
+                <button class="card-btn disabled">即将开发</button>
+            </div>
+        </div>
+        
+        <div class="system-status">
+            <h2>系统状态</h2>
+            <div class="status-grid">
+                <div class="status-item">
+                    <div class="status-label">服务状态</div>
+                    <div class="status-value good">正常运行</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">在线功能</div>
+                    <div class="status-value">2/6 个</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">今日处理</div>
+                    <div class="status-value">0 个文件</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">系统版本</div>
+                    <div class="status-value">v2.0.0</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">存储空间</div>
+                    <div class="status-value good">充足</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">最后更新</div>
+                    <div class="status-value" id="lastUpdateTime">正在加载...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© 2026 ZIP转PDF工具集 | 版本 2.0.0 | 持续开发中...</p>
+            <p style="margin-top: 10px; font-size: 0.8em;">
+                如有问题或建议，请联系开发者 | 更多功能正在开发中，敬请期待！
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // 更新最后更新时间
+        document.getElementById('lastUpdateTime').textContent = new Date().toLocaleString('zh-CN');
+        
+        // 模拟系统状态更新
+        function updateSystemStatus() {
+            // 这里可以添加实际的系统状态检查逻辑
+            console.log('系统状态检查...');
+        }
+        
+        // 页面加载时更新状态
+        window.addEventListener('load', updateSystemStatus);
+        
+        // 每30秒更新一次状态
+        setInterval(updateSystemStatus, 30000);
+    </script>
+</body>
+</html>

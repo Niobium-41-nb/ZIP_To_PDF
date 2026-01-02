@@ -1,0 +1,66 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+        
+    - name: Build executable
+      run: |
+        pyinstaller --onefile --name "ZipToPDF" --add-data "templates;templates" --add-data "static;static" --add-data "utils;utils" --add-data "config.py;." --hidden-import=flask --hidden-import=werkzeug --hidden-import=PIL --hidden-import=PIL.Image --hidden-import=img2pdf --hidden-import=python_magic --hidden-import=rarfile --hidden-import=py7zr --hidden-import=jmcomic --hidden-import=utils.file_utils --hidden-import=utils.compression --hidden-import=utils.image_processor --hidden-import=utils.pdf_generator run.py
+        
+    - name: Create release package
+      run: |
+        mkdir release
+        copy dist\ZipToPDF.exe release\
+        copy README.md release\
+        copy LICENSE release\
+        copy QuickStart.bat release\
+        copy UserManual.md release\
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: release/*
+        body: |
+          # 压缩包转PDF工具 ${{ github.ref_name }}
+          
+          ## 🎉 新版本发布
+          
+          ### 功能特性
+          - ✅ 压缩包转PDF功能
+          - ✅ JM漫画下载和转换
+          - ✅ Web界面和命令行双模式
+          - ✅ 单文件可执行程序
+          
+          ### 使用说明
+          1. 下载 `压缩包转PDF工具.exe`
+          2. 双击运行或使用命令行
+          3. 详细说明请查看 `可执行文件使用说明.md`
+          
+          ### 系统要求
+          - Windows 7/8/10/11
+          - 4GB RAM (推荐)
+          - 2GB 可用磁盘空间
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JM漫画下载工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .mode-selector {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+        
+        .mode-btn {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .mode-btn.active {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-color: #4facfe;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 500;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+        
+        .comic-ids-input {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: end;
+        }
+        
+        .comic-ids-input textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1em;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+        
+        .add-id-btn {
+            background: #4facfe;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .add-id-btn:hover {
+            background: #3a9bf5;
+        }
+        
+        .id-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .id-tag {
+            background: #e7f3ff;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .remove-id {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+            font-size: 1.2em;
+            line-height: 1;
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .download-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+        }
+        
+        .download-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .progress-container {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .comic-list {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .comic-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .comic-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .comic-title {
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .comic-status {
+            font-size: 0.9em;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background: #e7f3ff;
+            color: #4facfe;
+        }
+        
+        .comic-status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .comic-status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .comic-progress {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .comic-progress-fill {
+            height: 100%;
+            background: #4facfe;
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .result-container {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .result-files {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .file-info {
+            flex: 1;
+        }
+        
+        .file-name {
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+        
+        .file-size {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        
+        .download-file-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .download-file-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.3);
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #4facfe;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .info-box h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+        
+        .info-box ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #6c757d;
+        }
+        
+        .info-box li {
+            margin-bottom: 5px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .mode-selector {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .file-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .download-file-btn {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>JM漫画下载工具</h1>
+            <p>下载JM漫画并自动转换为PDF格式</p>
+            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <a href="/" style="color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px;">
+                    🏠 功能仪表板
+                </a>
+                <a href="/convert" style="color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px;">
+                    📦 压缩包转PDF
+                </a>
+            </div>
+        </div>
+        
+        <div class="content">
+            <div class="mode-selector">
+                <button class="mode-btn active" onclick="switchMode('single')">单个下载</button>
+                <button class="mode-btn" onclick="switchMode('batch')">批量下载</button>
+            </div>
+            
+            <div class="input-section" id="singleMode">
+                <div class="input-group">
+                    <label for="jmId">JM漫画ID</label>
+                    <input type="text" id="jmId" placeholder="请输入JM漫画ID（纯数字）" maxlength="20">
+                </div>
+            </div>
+            
+            <div class="input-section" id="batchMode" style="display: none;">
+                <div class="input-group">
+                    <label>批量下载漫画ID</label>
+                    <div class="comic-ids-input">
+                        <textarea id="batchIds" placeholder="每行输入一个JM漫画ID&#10;例如：&#10;12345&#10;67890&#10;13579"></textarea>
+                    </div>
+                    <div class="id-list" id="idList"></div>
+                </div>
+            </div>
+            
+            <div class="info-box">
+                <h4>使用说明：</h4>
+                <ul>
+                    <li>JM漫画ID是纯数字，在JM漫画网址中能找到</li>
+                    <li>支持单个或批量下载多个漫画</li>
+                    <li>下载完成后会自动转换为PDF格式</li>
+                    <li>批量下载时每个漫画会单独生成PDF文件</li>
+                    <li>支持断点续传，如遇中断可重新开始</li>
+                </ul>
+            </div>
+            
+            <button class="download-btn" id="downloadBtn" onclick="startDownload()">开始下载</button>
+            
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-info">
+                    <span id="progressText">0%</span>
+                    <span id="statusText">等待开始</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+            
+            <div class="comic-list" id="comicList"></div>
+            
+            <div class="result-container" id="resultContainer">
+                <h3 style="color: #28a745; text-align: center;">下载完成！</h3>
+                <div class="result-files" id="resultFiles"></div>
+            </div>
+            
+            <div class="error-message" id="errorMessage"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'single';
+        let downloadTasks = [];
+        let activeTaskId = null;
+        let statusInterval = null;
+        
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 显示对应模式
+            document.getElementById('singleMode').style.display = mode === 'single' ? 'block' : 'none';
+            document.getElementById('batchMode').style.display = mode === 'batch' ? 'block' : 'none';
+            
+            resetUI();
+        }
+        
+        function startDownload() {
+            const downloadBtn = document.getElementById('downloadBtn');
+            const comicIds = getComicIds();
+            
+            if (comicIds.length === 0) {
+                showError(currentMode === 'single' ? '请输入JM漫画ID' : '请输入至少一个漫画ID');
+                return;
+            }
+            
+            // 验证ID格式
+            const invalidIds = comicIds.filter(id => !/^\d+$/.test(id));
+            if (invalidIds.length > 0) {
+                showError(`无效的漫画ID: ${invalidIds.join(', ')}`);
+                return;
+            }
+            
+            resetUI();
+            downloadBtn.disabled = true;
+            downloadBtn.innerHTML = '<span class="loading"></span> 准备下载...';
+            
+            // 准备下载任务
+            downloadTasks = comicIds.map(id => ({
+                id: id,
+                status: '等待开始',
+                progress: 0,
+                error: null,
+                result: null
+            }));
+            
+            // 显示任务列表
+            updateTaskList();
+            
+            // 开始第一个任务
+            startNextTask();
+        }
+        
+        function getComicIds() {
+            if (currentMode === 'single') {
+                const id = document.getElementById('jmId').value.trim();
+                return id ? [id] : [];
+            } else {
+                const textarea = document.getElementById('batchIds');
+                return textarea.value
+                    .split('\n')
+                    .map(id => id.trim())
+                    .filter(id => id.length > 0);
+            }
+        }
+        
+        function startNextTask() {
+            const pendingTask = downloadTasks.find(task => task.status === '等待开始');
+            if (!pendingTask) {
+                // 所有任务完成
+                finishDownload();
+                return;
+            }
+            
+            activeTaskId = pendingTask.id;
+            pendingTask.status = '下载中';
+            updateTaskList();
+            
+            // 发起下载请求
+            fetch('/download/jm', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    jm_id: pendingTask.id,
+                    task_type: currentMode === 'batch' ? 'batch' : 'single'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    pendingTask.status = '失败';
+                    pendingTask.error = data.error;
+                    updateTaskList();
+                    startNextTask();
+                    return;
+                }
+                
+                // 开始轮询状态
+                startStatusPolling(data.task_id, pendingTask);
+            })
+            .catch(error => {
+                pendingTask.status = '失败';
+                pendingTask.error = '请求失败: ' + error.message;
+                updateTaskList();
+                startNextTask();
+            });
+        }
+        
+        function startStatusPolling(taskId, task) {
+            if (statusInterval) {
+                clearInterval(statusInterval);
+            }
+            
+            statusInterval = setInterval(() => {
+                fetch(`/status/jm/${taskId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            task.status = '失败';
+                            task.error = data.error;
+                            updateTaskList();
+                            clearInterval(statusInterval);
+                            startNextTask();
+                            return;
+                        }
+                        
+                        // 更新任务状态
+                        task.status = data.status;
+                        task.progress = data.progress || 0;
+                        
+                        // 更新全局进度
+                        updateOverallProgress();
+                        
+                        // 更新任务列表
+                        updateTaskList();
+                        
+                        if (data.status === '完成') {
+                            task.result = data;
+                            clearInterval(statusInterval);
+                            startNextTask();
+                        } else if (data.status === '失败') {
+                            task.error = data.error || '下载失败';
+                            clearInterval(statusInterval);
+                            startNextTask();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('状态检查失败:', error);
+                    });
+            }, 2000);
+        }
+        
+        function updateOverallProgress() {
+            const completedTasks = downloadTasks.filter(t => t.status === '完成');
+            const totalTasks = downloadTasks.length;
+            
+            if (totalTasks === 0) return;
+            
+            const overallProgress = Math.round((completedTasks.length / totalTasks) * 100);
+            
+            // 更新进度条
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            if (progressFill) {
+                progressFill.style.width = `${overallProgress}%`;
+            }
+            if (progressText) {
+                progressText.textContent = `${overallProgress}% (${completedTasks.length}/${totalTasks})`;
+            }
+        }
+        
+        function updateTaskList() {
+            const comicList = document.getElementById('comicList');
+            comicList.style.display = 'block';
+            
+            let html = '';
+            downloadTasks.forEach(task => {
+                let statusClass = '';
+                let statusText = task.status;
+                
+                if (task.status === '完成') {
+                    statusClass = 'success';
+                } else if (task.status === '失败') {
+                    statusClass = 'error';
+                } else if (task.status === '下载中') {
+                    statusClass = 'active';
+                }
+                
+                html += `
+                    <div class="comic-item">
+                        <div class="comic-header">
+                            <div class="comic-title">漫画 ID: ${task.id}</div>
+                            <div class="comic-status ${statusClass}">${statusText}</div>
+                        </div>
+                        ${task.error ? `<div style="color: #dc3545; font-size: 0.9em;">${task.error}</div>` : ''}
+                        ${task.progress > 0 ? `
+                            <div class="comic-progress">
+                                <div class="comic-progress-fill" style="width: ${task.progress}%"></div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            comicList.innerHTML = html;
+        }
+        
+        function finishDownload() {
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.disabled = false;
+            downloadBtn.textContent = '开始下载';
+            
+            // 显示进度容器
+            const progressContainer = document.getElementById('progressContainer');
+            progressContainer.style.display = 'block';
+            
+            // 显示结果
+            const resultContainer = document.getElementById('resultContainer');
+            const resultFiles = document.getElementById('resultFiles');
+            
+            const successfulTasks = downloadTasks.filter(t => t.status === '完成' && t.result);
+            if (successfulTasks.length > 0) {
+                resultContainer.style.display = 'block';
+                
+                let filesHtml = '';
+                successfulTasks.forEach(task => {
+                    const result = task.result;
+                    if (result.files && result.files.length > 0) {
+                        result.files.forEach(file => {
+                            filesHtml += `
+                                <div class="file-item">
+                                    <div class="file-info">
+                                        <div class="file-name">${file.filename}</div>
+                                        <div class="file-size">${formatFileSize(file.size)}</div>
+                                    </div>
+                                    <a href="${file.download_url}" class="download-file-btn" download>下载</a>
+                                </div>
+                            `;
+                        });
+                    }
+                });
+                
+                resultFiles.innerHTML = filesHtml;
+            }
+        }
+        
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.style.display = 'block';
+            errorMessage.textContent = message;
+            
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 5000);
+        }
+        
+        function resetUI() {
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('comicList').style.display = 'none';
+            document.getElementById('resultContainer').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            if (progressFill) progressFill.style.width = '0%';
+            if (progressText) progressText.textContent = '0%';
+            
+            if (statusInterval) {
+                clearInterval(statusInterval);
+                statusInterval = null;
+            }
+            
+            downloadTasks = [];
+            activeTaskId = null;
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 检查是否有之前未完成的任务
+            checkPendingTasks();
+        });
+        
+        function checkPendingTasks() {
+            // 可以从localStorage中恢复之前的任务
+            const savedTasks = localStorage.getItem('jm_download_tasks');
+            if (savedTasks) {
+                try {
+                    const tasks = JSON.parse(savedTasks);
+                    if (tasks.length > 0) {
+                        if (confirm(`发现 ${tasks.length} 个未完成的下载任务，是否继续？`)) {
+                            downloadTasks = tasks;
+                            startNextTask();
+                        }
+                    }
+                } catch (e) {
+                    console.error('恢复任务失败:', e);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
